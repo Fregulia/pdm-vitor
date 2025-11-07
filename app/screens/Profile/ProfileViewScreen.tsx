@@ -18,22 +18,20 @@ export default function ProfileViewScreen() {
 
   // FUNCAO PARA CARREGAR O PERFIL DO USUARIO
   const loadProfile = useCallback(async () => {
-    setLoading(true);
+    // Se não há usuário autenticado, não tentar carregar
+    if (!user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
 
+    setLoading(true);
     try {
-      // Se não há usuário autenticado, não tentar carregar nem alertar
-      if (!user) {
-        setProfile(null);
-        return;
-      }
       const data = await getProfile();
       setProfile(data);
     } catch (error) {
-      // Só alerta se ainda houver usuário autenticado (evita alert após logout)
       console.error("Failed to load profile:", error);
-      if (user) {
-        Alert.alert("Erro", "Não foi possível carregar o perfil.");
-      }
+      Alert.alert("Erro", "Não foi possível carregar o perfil.");
     } finally {
       setLoading(false);
     }
@@ -170,8 +168,10 @@ export default function ProfileViewScreen() {
           onPress={async () => {
             try {
               await signOut();
-            } finally {
               router.replace("/auth/signin");
+            } catch (error) {
+              console.error("Erro ao fazer logout:", error);
+              Alert.alert("Erro", "Não foi possível sair. Tente novamente.");
             }
           }}
           variant="secondary"

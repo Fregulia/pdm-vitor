@@ -6,7 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
-export default function OwnerTabsLayout() {
+export default function StudentTabLayout() {
   const colorScheme = useColorScheme();
 
   return (
@@ -17,42 +17,27 @@ export default function OwnerTabsLayout() {
         tabBarButton: HapticTab,
       }}
     >
+      {/* ABA DASHBOARD */}
       <Tabs.Screen
         name="dashboard"
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="chart.bar.fill" color={color} />
+            <IconSymbol size={28} name="house.fill" color={color} />
           ),
         }}
       />
+      {/* ABA CHAT */}
       <Tabs.Screen
-        name="teachers"
+        name="chat"
         options={{
-          title: "Professores",
+          title: "Chat",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.2.fill" color={color} />
+            <IconSymbol size={28} name="message.fill" color={color} />
           ),
         }}
       />
-      <Tabs.Screen
-        name="students"
-        options={{
-          title: "Alunos",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.3.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="academy"
-        options={{
-          title: "Academia",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="building.2.fill" color={color} />
-          ),
-        }}
-      />
+      {/* ABA PERFIL */}
       <Tabs.Screen
         name="profile"
         options={{

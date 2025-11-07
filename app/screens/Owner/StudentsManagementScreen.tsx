@@ -1,7 +1,6 @@
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { UserAvatar } from "@/components/UserAvatar";
-import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -17,8 +16,8 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Modal,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -152,9 +151,9 @@ export default function StudentsManagementScreen() {
 
   if (loading) {
     return (
-      <View
+      <SafeAreaView
         style={[
-          GlobalStyles.container,
+          styles.container,
           {
             backgroundColor: Colors[colorScheme].background,
             justifyContent: "center",
@@ -163,95 +162,327 @@ export default function StudentsManagementScreen() {
         ]}
       >
         <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View
+    <SafeAreaView
       style={[
-        GlobalStyles.container,
+        styles.container,
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
-      <Text style={[GlobalStyles.title, { color: Colors[colorScheme].text }]}>
-        Gerenciar Alunos
-      </Text>
-      <Text
-        style={[
-          GlobalStyles.subtitle,
-          { color: Colors[colorScheme].secondaryText, marginBottom: 16 },
-        ]}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16 }}
+        showsVerticalScrollIndicator={false}
       >
-        Gere convites e gerencie seus alunos
-      </Text>
-
-      <TouchableOpacity
-        style={[
-          styles.generateButton,
-          { backgroundColor: Colors[colorScheme].tint },
-        ]}
-        onPress={() => setShowInviteModal(true)}
-      >
-        <FontAwesome name="plus" size={16} color="#fff" />
-        <Text style={styles.generateButtonText}>Gerar Convite para Aluno</Text>
-      </TouchableOpacity>
-
-      {students.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={{ color: Colors[colorScheme].secondaryText }}>
-            Nenhum aluno cadastrado ainda.
-          </Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.title, { color: Colors[colorScheme].text }]}>
+              Alunos
+            </Text>
+            <Text
+              style={[
+                styles.subtitle,
+                { color: Colors[colorScheme].secondaryText },
+              ]}
+            >
+              Gerencie os alunos da academia
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.countBadge,
+              { backgroundColor: Colors[colorScheme].tint },
+            ]}
+          >
+            <Text style={styles.countText}>{students.length}</Text>
+          </View>
         </View>
-      ) : (
-        <FlatList
-          data={students}
-          keyExtractor={(item) => item.uid}
-          renderItem={({ item }) => {
-            const trainer = trainers.find((t) => t.uid === item.trainer_id);
+
+        {/* Estatísticas */}
+        <View style={styles.statsRow}>
+          <View
+            style={[
+              styles.statCard,
+              { backgroundColor: Colors[colorScheme].card },
+            ]}
+          >
+            <FontAwesome
+              name="graduation-cap"
+              size={24}
+              color={Colors[colorScheme].tint}
+            />
+            <Text
+              style={[styles.statNumber, { color: Colors[colorScheme].text }]}
+            >
+              {students.length}
+            </Text>
+            <Text
+              style={[
+                styles.statLabel,
+                { color: Colors[colorScheme].secondaryText },
+              ]}
+            >
+              Total
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.statCard,
+              { backgroundColor: Colors[colorScheme].card },
+            ]}
+          >
+            <FontAwesome
+              name="user-plus"
+              size={24}
+              color={Colors[colorScheme].tint}
+            />
+            <Text
+              style={[styles.statNumber, { color: Colors[colorScheme].text }]}
+            >
+              {
+                students.filter((s) => {
+                  const created = s.createdAt?.toDate?.();
+                  if (!created) return false;
+                  const weekAgo = new Date();
+                  weekAgo.setDate(weekAgo.getDate() - 7);
+                  return created > weekAgo;
+                }).length
+              }
+            </Text>
+            <Text
+              style={[
+                styles.statLabel,
+                { color: Colors[colorScheme].secondaryText },
+              ]}
+            >
+              Novos (7d)
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.statCard,
+              { backgroundColor: Colors[colorScheme].card },
+            ]}
+          >
+            <FontAwesome
+              name="users"
+              size={24}
+              color={Colors[colorScheme].tint}
+            />
+            <Text
+              style={[styles.statNumber, { color: Colors[colorScheme].text }]}
+            >
+              {trainers.length}
+            </Text>
+            <Text
+              style={[
+                styles.statLabel,
+                { color: Colors[colorScheme].secondaryText },
+              ]}
+            >
+              Professores
+            </Text>
+          </View>
+        </View>
+
+        {/* Seção de convite */}
+        <View
+          style={[
+            styles.inviteSection,
+            { backgroundColor: Colors[colorScheme].card },
+          ]}
+        >
+          <View style={styles.inviteSectionContent}>
+            <FontAwesome
+              name="ticket"
+              size={32}
+              color={Colors[colorScheme].tint}
+            />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text
+                style={[
+                  styles.inviteSectionTitle,
+                  { color: Colors[colorScheme].text },
+                ]}
+              >
+                Convidar Aluno
+              </Text>
+              <Text
+                style={[
+                  styles.inviteSectionDesc,
+                  { color: Colors[colorScheme].secondaryText },
+                ]}
+              >
+                Gere um código para novo aluno
+              </Text>
+            </View>
+          </View>
+          <ThemedButton
+            title="Gerar Convite"
+            onPress={() => setShowInviteModal(true)}
+            icon={<FontAwesome name="plus" size={16} color="#fff" />}
+          />
+        </View>
+
+        {/* Lista de alunos */}
+        <View style={styles.listHeader}>
+          <Text
+            style={[styles.sectionTitle, { color: Colors[colorScheme].text }]}
+          >
+            Alunos Cadastrados
+          </Text>
+          {students.length > 0 && (
+            <Text
+              style={{ color: Colors[colorScheme].secondaryText, fontSize: 14 }}
+            >
+              {students.length} {students.length === 1 ? "aluno" : "alunos"}
+            </Text>
+          )}
+        </View>
+
+        {students.length === 0 ? (
+          <View style={styles.emptyState}>
+            <FontAwesome
+              name="graduation-cap"
+              size={48}
+              color={Colors[colorScheme].secondaryText}
+            />
+            <Text
+              style={[styles.emptyTitle, { color: Colors[colorScheme].text }]}
+            >
+              Nenhum aluno cadastrado
+            </Text>
+            <Text
+              style={[
+                styles.emptyDesc,
+                { color: Colors[colorScheme].secondaryText },
+              ]}
+            >
+              Gere um convite para adicionar o primeiro aluno à academia
+            </Text>
+          </View>
+        ) : (
+          students.map((student) => {
+            const trainer = trainers.find((t) => t.uid === student.trainer_id);
             return (
               <View
+                key={student.uid}
                 style={[
                   styles.studentCard,
                   { backgroundColor: Colors[colorScheme].card },
                 ]}
               >
-                <UserAvatar name={item.name} size={40} />
-                <View style={styles.studentInfo}>
-                  <Text
-                    style={{
-                      color: Colors[colorScheme].text,
-                      fontWeight: "600",
-                      fontSize: 16,
-                    }}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text
-                    style={{
-                      color: Colors[colorScheme].secondaryText,
-                      fontSize: 14,
-                    }}
-                  >
-                    Professor: {trainer?.name || "N/A"}
-                  </Text>
+                <View style={styles.studentHeader}>
+                  <UserAvatar name={student.name} size={50} />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text
+                      style={[
+                        styles.studentName,
+                        { color: Colors[colorScheme].text },
+                      ]}
+                    >
+                      {student.name}
+                    </Text>
+                    <View style={styles.studentInfoRow}>
+                      <FontAwesome
+                        name="envelope"
+                        size={12}
+                        color={Colors[colorScheme].secondaryText}
+                      />
+                      <Text
+                        style={[
+                          styles.studentInfo,
+                          { color: Colors[colorScheme].secondaryText },
+                        ]}
+                      >
+                        {student.email || "Email não disponível"}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-                <TouchableOpacity
-                  onPress={() => handleRemoveStudent(item)}
-                  style={styles.removeButton}
-                >
-                  <FontAwesome
-                    name="trash"
-                    size={18}
-                    color={Colors[colorScheme].secondaryText}
-                  />
-                </TouchableOpacity>
+
+                {trainer && (
+                  <View style={styles.trainerSection}>
+                    <Text
+                      style={[
+                        styles.trainerLabel,
+                        { color: Colors[colorScheme].secondaryText },
+                      ]}
+                    >
+                      Professor Responsável
+                    </Text>
+                    <View style={styles.trainerInfo}>
+                      <UserAvatar name={trainer.name} size={32} />
+                      <Text
+                        style={[
+                          styles.trainerName,
+                          { color: Colors[colorScheme].text },
+                        ]}
+                      >
+                        {trainer.name}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.studentFooter}>
+                  <View style={{ flex: 1 }}>
+                    {student.createdAt && (
+                      <View style={styles.dateInfo}>
+                        <FontAwesome
+                          name="calendar"
+                          size={12}
+                          color={Colors[colorScheme].secondaryText}
+                        />
+                        <Text
+                          style={[
+                            styles.dateText,
+                            { color: Colors[colorScheme].secondaryText },
+                          ]}
+                        >
+                          Cadastrado em{" "}
+                          {student.createdAt
+                            ?.toDate?.()
+                            .toLocaleDateString("pt-BR") ||
+                            "Data não disponível"}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveStudent(student)}
+                    style={[
+                      styles.removeButton,
+                      { borderColor: Colors[colorScheme].destructive },
+                    ]}
+                  >
+                    <FontAwesome
+                      name="trash"
+                      size={14}
+                      color={Colors[colorScheme].destructive}
+                    />
+                    <Text
+                      style={[
+                        styles.removeButtonText,
+                        { color: Colors[colorScheme].destructive },
+                      ]}
+                    >
+                      Remover
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             );
-          }}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      )}
+          })
+        )}
+      </ScrollView>
 
       {/* Modal para gerar convite */}
       <Modal
@@ -433,33 +664,115 @@ export default function StudentsManagementScreen() {
           </TouchableOpacity>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  generateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  generateButtonText: {
-    color: "#fff",
-    fontWeight: "600",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  subtitle: {
     fontSize: 16,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+  countBadge: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: "center",
+    justifyContent: "center",
   },
-  studentCard: {
+  countText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  inviteSection: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  inviteSectionContent: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 16,
+  },
+  inviteSectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  inviteSectionDesc: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  listHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 48,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 16,
+  },
+  emptyDesc: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
+    paddingHorizontal: 32,
+  },
+  studentCard: {
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -467,14 +780,73 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
+  },
+  studentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  studentName: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  studentInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    gap: 6,
   },
   studentInfo: {
-    flex: 1,
-    marginLeft: 12,
+    fontSize: 14,
+  },
+  trainerSection: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(128, 128, 128, 0.2)",
+  },
+  trainerLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  trainerInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  trainerName: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  studentFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(128, 128, 128, 0.2)",
+  },
+  dateInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dateText: {
+    fontSize: 12,
   },
   removeButton: {
-    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  removeButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,

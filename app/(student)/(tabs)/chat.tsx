@@ -4,7 +4,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import { Text, View } from "react-native";
 
-export default function StudentsRoute() {
+export default function ChatScreen() {
   const colorScheme = useColorScheme() ?? "light";
 
   return (
@@ -15,7 +15,7 @@ export default function StudentsRoute() {
       ]}
     >
       <Text style={[GlobalStyles.title, { color: Colors[colorScheme].text }]}>
-        Alunos
+        Chat
       </Text>
       <Text
         style={[
@@ -23,7 +23,7 @@ export default function StudentsRoute() {
           { color: Colors[colorScheme].secondaryText },
         ]}
       >
-        Tela em desenvolvimento
+        Funcionalidade em desenvolvimento
       </Text>
     </View>
   );

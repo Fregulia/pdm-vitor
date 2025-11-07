@@ -5,6 +5,7 @@ import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -14,11 +15,93 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+
+const styles = StyleSheet.create({
+  welcomeContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  checkboxText: {
+    fontSize: 15,
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    opacity: 0.2,
+  },
+  dividerText: {
+    paddingHorizontal: 16,
+    fontSize: 14,
+    opacity: 0.6,
+  },
+  linkButton: {
+    marginTop: 8,
+  },
+  linkButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  linkButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  forgotPasswordButton: {
+    alignSelf: "flex-end",
+    marginTop: -4,
+    marginBottom: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+});
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -52,32 +135,57 @@ export default function SignInScreen() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             <View
               style={[
                 GlobalStyles.container,
-                { backgroundColor: "transparent" },
+                { backgroundColor: "transparent", paddingTop: 100 },
               ]}
             >
-              <Text
-                style={[
-                  GlobalStyles.title,
-                  { color: Colors[colorScheme].text },
-                ]}
-              >
-                Bem-vindo
-              </Text>
-              <Text
-                style={[
-                  GlobalStyles.subtitle,
-                  { color: Colors[colorScheme].secondaryText },
-                ]}
-              >
-                Entre para continuar
-              </Text>
-              {/* INPUT DE EMAIL */}
+              {/* Welcome Header with Icon */}
+              <View style={styles.welcomeContainer}>
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: Colors[colorScheme].card },
+                  ]}
+                >
+                  <Ionicons
+                    name="barbell"
+                    size={40}
+                    color={Colors[colorScheme].tint}
+                  />
+                </View>
+                <Text
+                  style={[
+                    GlobalStyles.title,
+                    {
+                      color: Colors[colorScheme].text,
+                      fontSize: 32,
+                      marginBottom: 8,
+                    },
+                  ]}
+                >
+                  Bem-vindo de volta
+                </Text>
+                <Text
+                  style={[
+                    GlobalStyles.subtitle,
+                    {
+                      color: Colors[colorScheme].secondaryText,
+                      fontSize: 16,
+                      marginBottom: 0,
+                    },
+                  ]}
+                >
+                  Entre para continuar sua jornada
+                </Text>
+              </View>
+
+              {/* Login Form */}
               <ThemedInput
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -87,8 +195,9 @@ export default function SignInScreen() {
                 returnKeyType="next"
                 blurOnSubmit={false}
                 onSubmitEditing={() => passwordRef.current?.focus()}
+                autoComplete="email"
+                textContentType="emailAddress"
               />
-              {/* INPUT DE SENHA */}
               <ThemedInput
                 placeholder="Senha"
                 secureTextEntry
@@ -97,57 +206,119 @@ export default function SignInScreen() {
                 ref={passwordRef}
                 returnKeyType="go"
                 onSubmitEditing={onSubmit}
+                autoComplete="password"
+                textContentType="password"
               />
-              {/* LEMBRAR-ME */}
+
+              {/* Forgot Password Link */}
+              <TouchableOpacity
+                onPress={() => router.push("/auth/forgot-password")}
+                style={styles.forgotPasswordButton}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.forgotPasswordText,
+                    { color: Colors[colorScheme].tint },
+                  ]}
+                >
+                  Esqueceu a senha?
+                </Text>
+              </TouchableOpacity>
+
+              {/* Remember Me Checkbox */}
               <Pressable
                 onPress={() => setRemember((v) => !v)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 16,
-                }}
+                style={styles.checkboxContainer}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: remember }}
               >
                 <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 4,
-                    borderWidth: 2,
-                    borderColor: Colors[colorScheme].tint,
-                    backgroundColor: remember
-                      ? Colors[colorScheme].tint
-                      : "transparent",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                />
-                <Text style={{ color: Colors[colorScheme].text }}>
-                  Manter-me logado
+                  style={[
+                    styles.checkbox,
+                    {
+                      borderColor: Colors[colorScheme].tint,
+                      backgroundColor: remember
+                        ? Colors[colorScheme].tint
+                        : "transparent",
+                    },
+                  ]}
+                >
+                  {remember && (
+                    <Ionicons
+                      name="checkmark"
+                      size={16}
+                      color={Colors[colorScheme].card}
+                    />
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.checkboxText,
+                    { color: Colors[colorScheme].text },
+                  ]}
+                >
+                  Manter-me conectado
                 </Text>
               </Pressable>
-              {/* BOTÃO DE LOGIN */}
+
+              {/* Sign In Button */}
               <ThemedButton
                 title={loading ? "Entrando..." : "Entrar"}
                 onPress={onSubmit}
                 disabled={loading}
               />
-              {/* BOTÃO DE RECUPERAÇÃO DE SENHA */}
-              <ThemedButton
-                title="Esqueci minha senha"
-                variant="secondary"
-                onPress={() => router.push("/auth/forgot-password")}
-                style={{ marginTop: 16 }}
-              />
-              {/* BOTÃO DE NAVEGAÇÃO PARA CADASTRO */}
-              <ThemedButton
-                title="Criar conta"
-                variant="secondary"
+
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: Colors[colorScheme].border },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.dividerText,
+                    { color: Colors[colorScheme].secondaryText },
+                  ]}
+                >
+                  ou
+                </Text>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    { backgroundColor: Colors[colorScheme].border },
+                  ]}
+                />
+              </View>
+
+              {/* Sign Up Button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() => router.push("/auth/signup-choose")}
-                style={{ marginTop: 8 }}
-              />
+                style={[
+                  styles.linkButtonContent,
+                  {
+                    borderColor: Colors[colorScheme].tint,
+                    backgroundColor: Colors[colorScheme].background,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="person-add"
+                  size={20}
+                  color={Colors[colorScheme].tint}
+                />
+                <Text
+                  style={[
+                    styles.linkButtonText,
+                    { color: Colors[colorScheme].tint },
+                  ]}
+                >
+                  Criar nova conta
+                </Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </TouchableWithoutFeedback>

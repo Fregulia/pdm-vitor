@@ -18,6 +18,7 @@ export const Colors = {
     secondaryText: "#555",
     inputBackground: "#FFFFFF",
     buttonDisabled: "#a9d5ff",
+    destructive: "#DC3545",
   },
   // CORES DO TEMA DARK
   dark: {
@@ -32,6 +33,7 @@ export const Colors = {
     secondaryText: "#bbb",
     inputBackground: "#2a2a2a",
     buttonDisabled: "#004c80",
+    destructive: "#FF6B6B",
   },
 };
 

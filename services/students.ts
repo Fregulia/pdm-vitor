@@ -1,4 +1,5 @@
 import { auth, db } from "@/services/firebase";
+import { updateProfile } from "firebase/auth";
 import {
   collection,
   doc,
@@ -63,6 +64,18 @@ export async function joinAsStudentWithInvite(inviteCode: string) {
   await setDoc(ref, student, { merge: true });
   console.log(
     "[joinAsStudentWithInvite] Documento em academies criado com sucesso"
+  );
+
+  console.log(
+    "[joinAsStudentWithInvite] Atualizando displayName do usuário com o nome do convite"
+  );
+  // Atualiza o displayName do usuário no Firebase Auth
+  await updateProfile(user, {
+    displayName: studentName,
+  });
+  console.log(
+    "[joinAsStudentWithInvite] displayName atualizado para:",
+    studentName
   );
 
   console.log(
