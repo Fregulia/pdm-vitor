@@ -1,5 +1,5 @@
+import StudentsScreen from "@/app/screens/Students/StudentsScreen";
 import React from "react";
-import StudentsScreen from "@/screens/Students/StudentsScreen";
 
 export default function StudentsRoute() {
   return <StudentsScreen />;

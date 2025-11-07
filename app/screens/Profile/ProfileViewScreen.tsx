@@ -1,13 +1,13 @@
+import { ThemedButton } from "@/components/ThemedButton";
+import { UserAvatar } from "@/components/UserAvatar";
+import { GlobalStyles } from "@/constants/styles";
+import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { ThemedButton } from "@/components/ThemedButton";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Colors } from "@/constants/theme";
-import { GlobalStyles } from "@/constants/styles";
-import { useFocusEffect } from "@react-navigation/native";
-import { UserAvatar } from "@/components/UserAvatar";
 
 export default function ProfileViewScreen() {
   const router = useRouter();
@@ -20,17 +20,24 @@ export default function ProfileViewScreen() {
   const loadProfile = useCallback(async () => {
     setLoading(true);
 
-    // TENTA OBTER DADOS DO PERFIL
     try {
+      // Se não há usuário autenticado, não tentar carregar nem alertar
+      if (!user) {
+        setProfile(null);
+        return;
+      }
       const data = await getProfile();
       setProfile(data);
     } catch (error) {
+      // Só alerta se ainda houver usuário autenticado (evita alert após logout)
       console.error("Failed to load profile:", error);
-      Alert.alert("Erro", "Não foi possível carregar o perfil.");
+      if (user) {
+        Alert.alert("Erro", "Não foi possível carregar o perfil.");
+      }
     } finally {
       setLoading(false);
     }
-  }, [getProfile]);
+  }, [getProfile, user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -160,7 +167,13 @@ export default function ProfileViewScreen() {
         />
         <ThemedButton
           title="Sair"
-          onPress={signOut}
+          onPress={async () => {
+            try {
+              await signOut();
+            } finally {
+              router.replace("/auth/signin");
+            }
+          }}
           variant="secondary"
           style={{ marginTop: 8 }}
         />

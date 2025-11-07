@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 
-// ROTA INICIAL REDIRECIONA PARA A TELA DE LOGIN
+// Redireciona sempre para o preload, que decide a rota (landing/login/tabs)
 export default function Index() {
-  return <Redirect href="/auth/signin" />;
+  return <Redirect href={{ pathname: "/preload" } as any} />;
 }

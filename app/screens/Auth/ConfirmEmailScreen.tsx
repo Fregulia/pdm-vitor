@@ -1,17 +1,19 @@
+import { ThemedButton } from "@/components/ThemedButton";
+import { GlobalStyles } from "@/constants/styles";
+import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { auth } from "@/services/firebase";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import { ThemedButton } from "@/components/ThemedButton";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Colors } from "@/constants/theme";
-import { GlobalStyles } from "@/constants/styles";
-import { useAuth } from "@/context/AuthContext";
 
 export default function ConfirmEmailScreen() {
   const router = useRouter();
   const { resendEmailVerification } = useAuth();
   const colorScheme = useColorScheme() ?? "light";
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   // FUNÇÃO DE REENVIO DE EMAIL
   const onResend = async () => {
@@ -26,6 +28,35 @@ export default function ConfirmEmailScreen() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Verifica se o e-mail já foi confirmado e segue o fluxo normal
+  const onIConfirmed = async () => {
+    setChecking(true);
+    try {
+      const u = auth.currentUser;
+      if (!u) {
+        Alert.alert("Sessão expirada", "Faça login novamente para continuar.", [
+          { text: "OK", onPress: () => router.replace("/auth/signin") },
+        ]);
+        return;
+      }
+      // Recarrega os dados do usuário do servidor
+      await u.reload();
+      if (u.emailVerified) {
+        Alert.alert("Verificado", "Seu e-mail foi verificado com sucesso.");
+        router.replace("/preload");
+      } else {
+        Alert.alert(
+          "Ainda não verificado",
+          "Não encontramos a verificação ainda. Aguarde alguns segundos após clicar no link e tente novamente."
+        );
+      }
+    } catch {
+      Alert.alert("Erro", "Não foi possível verificar agora. Tente novamente.");
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -53,12 +84,13 @@ export default function ConfirmEmailScreen() {
         onPress={onResend}
         disabled={loading}
       />
-      {/* BOTÃO DE NAVEGAÇÃO PARA LOGIN */}
+      {/* BOTÃO PARA CONFIRMAR QUE JÁ VALIDOU O EMAIL */}
       <ThemedButton
-        title="Ir para Login"
-        onPress={() => router.replace("/auth/signin")}
+        title={checking ? "Verificando..." : "Já confirmei meu e-mail"}
+        onPress={onIConfirmed}
         variant="secondary"
         style={{ marginTop: 8 }}
+        disabled={checking}
       />
     </View>
   );

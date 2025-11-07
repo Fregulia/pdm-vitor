@@ -8,15 +8,21 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "firebase": "firebase",
+    "firebase:login": "firebase login",
+    "firebase:use": "firebase use --add",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@react-native-community/datetimepicker": "^8.5.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.2",
     "expo-blur": "~15.0.7",
+    "expo-clipboard": "^8.0.7",
     "expo-constants": "~18.0.10",
     "expo-font": "~14.0.9",
     "expo-haptics": "~15.0.7",
@@ -44,6 +50,7 @@
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "firebase-tools": "^14.24.0",
     "typescript": "~5.9.2"
   },
   "private": true

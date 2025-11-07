@@ -1,20 +1,21 @@
+import { BackButton } from "@/components/BackButton";
+import { ThemedButton } from "@/components/ThemedButton";
+import { ThemedInput } from "@/components/ThemedInput";
+import { GlobalStyles } from "@/constants/styles";
+import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  View,
-  Text,
   ActivityIndicator,
-  TouchableWithoutFeedback,
+  Alert,
   Keyboard,
+  Text,
   TextInput,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { ThemedInput } from "@/components/ThemedInput";
-import { ThemedButton } from "@/components/ThemedButton";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Colors } from "@/constants/theme";
-import { GlobalStyles } from "@/constants/styles";
 
 export default function ProfileEditScreen() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function ProfileEditScreen() {
   const [loading, setLoading] = useState(true);
   const nameRef = useRef<TextInput>(null);
   const bioRef = useRef<TextInput>(null);
-  
+
   // CARREGA DADOS DO PERFIL PARA EDIÇÃO
   useEffect(() => {
     (async () => {
@@ -54,7 +55,6 @@ export default function ProfileEditScreen() {
     }
   };
 
-  
   if (loading) {
     return (
       <View
@@ -80,6 +80,7 @@ export default function ProfileEditScreen() {
           { backgroundColor: Colors[colorScheme].background },
         ]}
       >
+        <BackButton />
         <Text
           style={[
             GlobalStyles.title,

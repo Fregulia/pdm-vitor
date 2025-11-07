@@ -1,24 +1,29 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import {
-  TouchableOpacity,
+  ActivityIndicator,
   Text,
+  TextStyle,
+  TouchableOpacity,
   TouchableOpacityProps,
   ViewStyle,
-  TextStyle,
 } from "react-native";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Colors } from "@/constants/theme";
 
 // CRIA A PROPS PARA CRIAÇÃO DO BOTÃO, RECEBENDO TEXTO, TIPO E OUTRAS PROPRIEDADES
 interface ThemedButtonProps extends TouchableOpacityProps {
   title: string;
   variant?: "primary" | "secondary" | "destructive";
+  loading?: boolean;
+  icon?: React.ReactNode;
 }
 
 // CRIA O BOTÃO BASEADO NAS INFORMAÇÕES DAS PROPS
 export function ThemedButton({
   title,
   variant = "primary",
+  loading,
+  icon,
   ...props
 }: ThemedButtonProps) {
   const colorScheme = useColorScheme() ?? "light";
@@ -46,6 +51,8 @@ export function ThemedButton({
     paddingHorizontal: 16,
     backgroundColor,
     opacity: props.disabled ? 0.5 : 1,
+    flexDirection: "row",
+    gap: 8,
   };
 
   // DEFINE OS ESTILOS DO TEXTO
@@ -57,7 +64,14 @@ export function ThemedButton({
 
   return (
     <TouchableOpacity {...props} style={[buttonStyle, props.style]}>
-      <Text style={textStyle}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator color={textColor} />
+      ) : (
+        <>
+          {icon}
+          <Text style={textStyle}>{title}</Text>
+        </>
+      )}
     </TouchableOpacity>
   );
 }

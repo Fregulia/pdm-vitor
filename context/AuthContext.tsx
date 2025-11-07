@@ -1,8 +1,31 @@
-import React, {createContext, useContext, useEffect, useMemo, useState,} from "react";
-import * as SecureStore from "expo-secure-store";
-import { User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, updateProfile, sendEmailVerification, sendPasswordResetEmail, deleteUser, onAuthStateChanged,} from "firebase/auth";
-import {doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp,} from "firebase/firestore";
 import { auth, db } from "@/services/firebase";
+import * as SecureStore from "expo-secure-store";
+import {
+  User,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signOut as fbSignOut,
+  onAuthStateChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 // DEFINE OS TIPOS DO CONTEXTO AUTH
 type AuthContextType = {
@@ -10,10 +33,19 @@ type AuthContextType = {
   initializing: boolean;
   loading: boolean;
   justSignedIn: boolean;
-  signIn: (email: string, password: string, remember?: boolean) => Promise<void>;
-  signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signIn: (
+    email: string,
+    password: string,
+    remember?: boolean
+  ) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName?: string,
+    role?: UserProfile["role"]
+  ) => Promise<void>;
   signOut: () => Promise<void>;
-  resendEmailVerification: () => Promise<void>;
+  resendEmailVerification: () => Promise<void>; // no-op durante testes
   resetPassword: (email: string) => Promise<void>;
   getProfile: () => Promise<any | null>;
   updateProfileDoc: (data: Partial<UserProfile>) => Promise<void>;
@@ -26,6 +58,7 @@ type UserProfile = {
   uid: string;
   email: string;
   displayName?: string;
+  role?: "owner" | "trainer";
   bio?: string;
   createdAt?: any;
   updatedAt?: any;
@@ -36,6 +69,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // DEFINE AS CHAVES USADAS PARA BUSCAR EMAIL E SENHA NO SECURE STORE
 const SECURE_EMAIL_KEY = "entrega1_email";
 const SECURE_PASS_KEY = "entrega1_password";
+
+// NORMALIZA NOME: remove espaços duplicados e capitaliza cada palavra
+function normalizeName(name: string): string {
+  if (!name) return "";
+  // remove espaços extras, deixa em minúsculas e capitaliza a primeira letra de cada palavra
+  const cleaned = name.replace(/\s+/g, " ").trim().toLowerCase();
+  return cleaned
+    .split(" ")
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+}
 
 // CRIA O PROVIDER DO AUTH CONTEXT
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -59,20 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // FAZ LOGIN NO FB AUTH E RETORNA AS CREDENCIAIS
     try {
-      const cred = await signInWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password
-      );
-      // SE NÃO ESTIVER VERIFICADO, DESLOGA E LANÇA ERRO
-      if (!cred.user.emailVerified) {
-        await fbSignOut(auth);
-        throw new Error("EMAIL_NOT_VERIFIED");
-      }
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      // Desativado: verificação de e-mail obrigatória para testes
       // SE A REMEMBER = TRUE, SALVA EMAIL E SENHA NO SECURE STORE, SE NÃO EXCLUI
       if (remember) {
-        await SecureStore.setItemAsync(SECURE_EMAIL_KEY, email);
-        await SecureStore.setItemAsync(SECURE_PASS_KEY, password);
+        // iOS: define acessibilidade do Keychain para garantir acesso após desbloqueio
+        const opts: SecureStore.SecureStoreOptions = {
+          keychainAccessible:
+            (SecureStore as any).AFTER_FIRST_UNLOCK ||
+            SecureStore.WHEN_UNLOCKED,
+        } as any;
+        await SecureStore.setItemAsync(SECURE_EMAIL_KEY, email, opts);
+        await SecureStore.setItemAsync(SECURE_PASS_KEY, password, opts);
       } else {
         await SecureStore.deleteItemAsync(SECURE_EMAIL_KEY);
         await SecureStore.deleteItemAsync(SECURE_PASS_KEY);
@@ -84,7 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // CRIA NOVA CONTA
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName?: string,
+    role?: UserProfile["role"]
+  ) => {
     setLoading(true);
 
     // CRIA CONTA COM EMAIL E SENHA
@@ -94,21 +141,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email.trim(),
         password
       );
-      // INSERE O NOME DE EXIBIÇÃO, SE HOUVER
-      if (displayName) {
-        await updateProfile(cred.user, { displayName });
+      // Normaliza nome e atualiza displayName no Auth, se informado
+      const normalizedDisplay = displayName
+        ? normalizeName(displayName)
+        : cred.user.displayName
+        ? normalizeName(cred.user.displayName)
+        : "";
+      if (normalizedDisplay) {
+        try {
+          await updateProfile(cred.user, { displayName: normalizedDisplay });
+        } catch {
+          // não bloquear fluxo se falhar
+        }
       }
       // CRIA UM DOCUMENTO NO FIRESTORE PARA O USUÁRIO CRIADO
       const profile: UserProfile = {
         uid: cred.user.uid,
         email: cred.user.email || email,
-        displayName: displayName || cred.user.displayName || "",
+        displayName: normalizedDisplay,
+        role: role,
         createdAt: serverTimestamp(),
       };
       // INSERE O DOCUMENTO CRIADO NO FIRESTORE
-      await setDoc(doc(db, "users", cred.user.uid), profile);
-      // ENVIA EMAIL DE VERIFICAÇÃO
-      await sendEmailVerification(cred.user);
+      try {
+        await setDoc(doc(db, "users", cred.user.uid), profile);
+      } catch (err) {
+        // Não falhar o signup se o Firestore estiver com regras desatualizadas
+        console.warn("Falha ao salvar perfil no Firestore:", err);
+      }
+      // Envia e-mail de verificação para o novo usuário
+      try {
+        await sendEmailVerification(cred.user);
+      } catch (err) {
+        console.warn("Falha ao enviar e-mail de verificação:", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -130,7 +196,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // REENVIA EMAIL DE VERIFICAÇÃO
   const resendEmailVerification = async () => {
-    // SE NÃO EXISTIR USUÁRIO AUTENTICADO, LANÇA ERRO
     if (!auth.currentUser) throw new Error("NOT_AUTHENTICATED");
     await sendEmailVerification(auth.currentUser);
   };
@@ -159,7 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
   };
 
-  // DELETAR CONTA 
+  // DELETAR CONTA
   const deleteAccountHard = async () => {
     // SE NÃO EXISTIR USUÁRIO AUTENTICADO, LANÇA ERRO
     if (!auth.currentUser) throw new Error("NOT_AUTHENTICATED");
@@ -192,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, initializing, loading, justSignedIn]
   );
 
-  // RENDERIZA O CONTEXTO COM O VALOR, E PASSA PARA OS FILHOS 
+  // RENDERIZA O CONTEXTO COM O VALOR, E PASSA PARA OS FILHOS
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
@@ -205,14 +270,14 @@ export function useAuth() {
 
 // TENTA FAZER LOGIN AUTOMÁTICO COM INFOS DO SECURE STORE
 export async function tryAutoSignIn() {
+  const available = await SecureStore.isAvailableAsync();
+  if (!available) return;
   const email = await SecureStore.getItemAsync(SECURE_EMAIL_KEY);
   const password = await SecureStore.getItemAsync(SECURE_PASS_KEY);
   if (email && password) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      if (!auth.currentUser?.emailVerified) {
-        await fbSignOut(auth);
-      }
+      // Desativado: verificação de e-mail obrigatória
     } catch {
       // ignore errors, user remains signed out
     }

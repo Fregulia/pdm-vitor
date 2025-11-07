@@ -7,29 +7,39 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider } from "@/context/AuthContext";
-
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function RootLayout() {
-  // DETECTA TEMA DO SISTEMA
+  // Detect system theme
   const colorScheme = useColorScheme();
 
   return (
-    // PASSA O TEMA PARA O PROVIDER DE TEMA
+    // Provide the theme to navigation
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      {/* COLOCA TUDO DENTRO DO PROVIDER DE AUTENTICAÇÃO */}
+      {/* Auth context provider */}
       <AuthProvider>
-        {/* DEFINE AS ROTAS */}
-        <Stack initialRouteName="preload">
-          {/* DÁ NOME E DESATIVA O HEADER */}
-          <Stack.Screen name="preload" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/signin" options={{ title: "Entrar", headerShown: false }} />
-          <Stack.Screen name="auth/signup" options={{ title: "Criar conta", headerShown: false}} />
-          <Stack.Screen name="auth/confirm-email" options={{ title: "Confirmar e-mail", headerShown: false }} />
-          <Stack.Screen name="auth/forgot-password" options={{ title: "Recuperar senha", headerShown: false }} />
-          <Stack.Screen name="profile-edit" options={{ title: "Editar perfil", headerShown: false }}/>
+        {/* Define routes */}
+        <Stack
+          initialRouteName="preload"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="preload" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="auth/signin" options={{ title: "Entrar" }} />
+          <Stack.Screen name="auth/signup" options={{ title: "Criar conta" }} />
+          <Stack.Screen
+            name="auth/confirm-email"
+            options={{ title: "Confirmar e-mail" }}
+          />
+          <Stack.Screen
+            name="auth/forgot-password"
+            options={{ title: "Recuperar senha" }}
+          />
+          <Stack.Screen
+            name="profile-edit"
+            options={{ title: "Editar perfil" }}
+          />
         </Stack>
         <StatusBar style="auto" />
       </AuthProvider>

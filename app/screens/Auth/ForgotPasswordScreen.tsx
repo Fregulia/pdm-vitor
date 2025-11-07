@@ -1,19 +1,20 @@
+import { BackButton } from "@/components/BackButton";
+import { ThemedButton } from "@/components/ThemedButton";
+import { ThemedInput } from "@/components/ThemedInput";
+import { GlobalStyles } from "@/constants/styles";
+import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Alert,
-  Text,
-  View,
-  TouchableWithoutFeedback,
   Keyboard,
+  Text,
   TextInput,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
-import { ThemedInput } from "@/components/ThemedInput";
-import { ThemedButton } from "@/components/ThemedButton";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Colors } from "@/constants/theme";
-import { GlobalStyles } from "@/constants/styles";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const emailRef = useRef<TextInput>(null);
-  
+
   // FUNÇÃO DE ENVIO DE FORMULÁRIO
   const onSubmit = async () => {
     setLoading(true);
@@ -51,6 +52,7 @@ export default function ForgotPasswordScreen() {
           { backgroundColor: Colors[colorScheme].background },
         ]}
       >
+        <BackButton />
         <Text style={[GlobalStyles.title, { color: Colors[colorScheme].text }]}>
           Recuperar senha
         </Text>
