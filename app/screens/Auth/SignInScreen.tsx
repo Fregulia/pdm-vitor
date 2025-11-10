@@ -196,7 +196,8 @@ export default function SignInScreen() {
                 blurOnSubmit={false}
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 autoComplete="email"
-                textContentType="emailAddress"
+                textContentType="username"
+                importantForAutofill="yes"
               />
               <ThemedInput
                 placeholder="Senha"
@@ -206,8 +207,9 @@ export default function SignInScreen() {
                 ref={passwordRef}
                 returnKeyType="go"
                 onSubmitEditing={onSubmit}
-                autoComplete="password"
+                autoComplete="current-password"
                 textContentType="password"
+                importantForAutofill="yes"
               />
 
               {/* Forgot Password Link */}

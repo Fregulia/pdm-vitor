@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
   createUserWithEmailAndPassword,
-  sendEmailVerification,
+  // sendEmailVerification, // TEMPORARIAMENTE DESABILITADO
   updateProfile,
 } from "firebase/auth";
 import React, { useRef, useState } from "react";
@@ -179,8 +179,8 @@ export default function SignUpStudentScreen() {
         password
       );
 
-      // 2. Envia email de verificação
-      await sendEmailVerification(userCredential.user);
+      // TEMPORARIAMENTE DESABILITADO: 2. Envia email de verificação
+      // await sendEmailVerification(userCredential.user);
 
       // 3. Atualiza profile (o nome virá do convite)
       await updateProfile(userCredential.user, {
@@ -192,7 +192,7 @@ export default function SignUpStudentScreen() {
 
       Alert.alert(
         "✅ Cadastro realizado!",
-        "Sua conta foi criada com sucesso! Verifique seu e-mail para confirmar.",
+        "Sua conta foi criada com sucesso!",
         [
           {
             text: "OK",
@@ -341,7 +341,8 @@ export default function SignUpStudentScreen() {
                   blurOnSubmit={false}
                   onSubmitEditing={() => passwordRef.current?.focus()}
                   autoComplete="email"
-                  textContentType="emailAddress"
+                  textContentType="username"
+                  importantForAutofill="yes"
                 />
 
                 <ThemedInput
@@ -355,6 +356,7 @@ export default function SignUpStudentScreen() {
                   onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                   autoComplete="password-new"
                   textContentType="newPassword"
+                  importantForAutofill="yes"
                 />
 
                 <ThemedInput
@@ -368,6 +370,7 @@ export default function SignUpStudentScreen() {
                   onSubmitEditing={() => inviteCodeRef.current?.focus()}
                   autoComplete="password-new"
                   textContentType="newPassword"
+                  importantForAutofill="yes"
                 />
               </View>
 

@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   createUserWithEmailAndPassword,
-  sendEmailVerification,
+  // sendEmailVerification, // TEMPORARIAMENTE DESABILITADO
   updateProfile,
 } from "firebase/auth";
 import React, { useRef, useState } from "react";
@@ -189,7 +189,7 @@ export default function SignUpChooseScreen() {
             email.trim(),
             password
           );
-          await sendEmailVerification(userCredential.user);
+          // TEMPORARIAMENTE DESABILITADO: await sendEmailVerification(userCredential.user);
           await updateProfile(userCredential.user, {
             displayName: name || "Aluno",
           });
@@ -197,7 +197,7 @@ export default function SignUpChooseScreen() {
 
           Alert.alert(
             "✅ Cadastro realizado!",
-            "Sua conta foi criada com sucesso! Verifique seu e-mail para confirmar.",
+            "Sua conta foi criada com sucesso!",
             [{ text: "OK", onPress: () => router.replace("/preload") }]
           );
         } catch (error: any) {
@@ -483,7 +483,8 @@ export default function SignUpChooseScreen() {
                   blurOnSubmit={false}
                   onSubmitEditing={() => passwordRef.current?.focus()}
                   autoComplete="email"
-                  textContentType="emailAddress"
+                  textContentType="username"
+                  importantForAutofill="yes"
                 />
                 <ThemedInput
                   placeholder="Senha (mínimo 6 caracteres)"
@@ -503,6 +504,7 @@ export default function SignUpChooseScreen() {
                   }
                   autoComplete="password-new"
                   textContentType="newPassword"
+                  importantForAutofill="yes"
                 />
 
                 {/* Confirm Password for Student */}
@@ -516,6 +518,7 @@ export default function SignUpChooseScreen() {
                     returnKeyType="next"
                     autoComplete="password-new"
                     textContentType="newPassword"
+                    importantForAutofill="yes"
                   />
                 )}
 

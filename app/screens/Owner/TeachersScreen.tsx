@@ -1,3 +1,4 @@
+import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Colors } from "@/constants/theme";
@@ -20,13 +21,13 @@ import {
   Alert,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OwnerTeachersPage() {
   const colorScheme = useColorScheme() ?? "light";
@@ -90,6 +91,7 @@ export default function OwnerTeachersPage() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
+      <MenuButton />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16 }}

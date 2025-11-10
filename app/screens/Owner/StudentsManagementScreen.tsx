@@ -1,3 +1,4 @@
+import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -7,27 +8,29 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getAcademy } from "@/services/academy";
 import { db } from "@/services/firebase";
 import { createStudentInvite } from "@/services/studentInvites";
-import { Student } from "@/services/students";
+import { Student, syncStudentData } from "@/services/students";
 import { Trainer } from "@/services/trainers";
 import { FontAwesome } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import { useRouter } from "expo-router";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function StudentsManagementScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const { user } = useAuth();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [gymId, setGymId] = useState<string | null>(null);
@@ -73,7 +76,23 @@ export default function StudentsManagementScreen() {
       const studentsData = studentsSnap.docs
         .map((d) => ({ ...d.data(), uid: d.id } as Student))
         .filter((student) => student.uid && student.name); // Só mostra alunos com cadastro completo
-      setStudents(studentsData);
+
+      // Sincroniza dados que podem estar faltando
+      for (const student of studentsData) {
+        if (!student.name || !student.email || !student.createdAt) {
+          await syncStudentData(gid, student.uid);
+        }
+      }
+
+      // Recarrega os dados após sincronizar
+      const updatedStudentsSnap = await getDocs(
+        collection(db, "academies", gid, "students")
+      );
+      const updatedStudentsData = updatedStudentsSnap.docs
+        .map((d) => ({ ...d.data(), uid: d.id } as Student))
+        .filter((student) => student.uid && student.name);
+
+      setStudents(updatedStudentsData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -173,6 +192,7 @@ export default function StudentsManagementScreen() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
+      <MenuButton />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16 }}
@@ -372,12 +392,19 @@ export default function StudentsManagementScreen() {
           students.map((student) => {
             const trainer = trainers.find((t) => t.uid === student.trainer_id);
             return (
-              <View
+              <TouchableOpacity
                 key={student.uid}
                 style={[
                   styles.studentCard,
                   { backgroundColor: Colors[colorScheme].card },
                 ]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/student-profile",
+                    params: { studentId: student.uid, gymId: gymId! },
+                  })
+                }
+                activeOpacity={0.7}
               >
                 <View style={styles.studentHeader}>
                   <UserAvatar name={student.name} size={50} />
@@ -478,7 +505,7 @@ export default function StudentsManagementScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })
         )}

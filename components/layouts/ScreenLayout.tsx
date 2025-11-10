@@ -2,7 +2,8 @@ import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import { SafeAreaView, View, ViewStyle } from "react-native";
+import { View, ViewStyle } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ScreenLayoutProps {
   children: React.ReactNode;

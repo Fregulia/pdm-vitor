@@ -5,10 +5,8 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   setDoc,
-  where,
 } from "firebase/firestore";
 import { getAcademy } from "./academy";
 
@@ -67,7 +65,7 @@ export async function createStudentInvite(
     createdAt: serverTimestamp(),
   };
 
-  const ref = doc(db, "studentInvites", code);
+  const ref = doc(db, "academies", gymId, "studentInvites", code);
   await setDoc(ref, inviteData);
   return code;
 }
@@ -87,25 +85,33 @@ export async function consumeStudentInvite(
   trainerId: string;
   studentName: string;
 }> {
-  console.log("[consumeStudentInvite] Iniciando com código:", code);
+  // Precisamos buscar o convite em todas as academias
+  const academiesSnap = await getDocs(collection(db, "academies"));
 
-  const ref = doc(db, "studentInvites", code.trim().toUpperCase());
-  console.log("[consumeStudentInvite] Buscando documento:", ref.path);
+  let inviteDoc = null;
 
-  const snap = await getDoc(ref);
-  console.log("[consumeStudentInvite] Documento existe?", snap.exists());
+  // Procura o convite em todas as academias
+  for (const academyDoc of academiesSnap.docs) {
+    const ref = doc(
+      db,
+      "academies",
+      academyDoc.id,
+      "studentInvites",
+      code.trim().toUpperCase()
+    );
 
-  if (!snap.exists()) {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      inviteDoc = snap;
+      break;
+    }
+  }
+
+  if (!inviteDoc) {
     throw new Error("INVITE_NOT_FOUND");
   }
 
-  const data = snap.data() as StudentInvite;
-  console.log("[consumeStudentInvite] Dados do convite:", {
-    usedBy: data.usedBy,
-    expiresAt: data.expiresAt,
-    ownerUid: data.ownerUid,
-    gymId: data.gymId,
-  });
+  const data = inviteDoc.data() as StudentInvite;
 
   // Verifica se já foi usado
   if (data.usedBy) {
@@ -119,17 +125,15 @@ export async function consumeStudentInvite(
     throw new Error("INVITE_EXPIRED");
   }
 
-  console.log("[consumeStudentInvite] Marcando convite como usado...");
   // Marca como usado (não deleta para auditoria)
   await setDoc(
-    ref,
+    inviteDoc.ref,
     {
       usedBy: usedByUid,
       usedAt: serverTimestamp(),
     },
     { merge: true }
   );
-  console.log("[consumeStudentInvite] Convite marcado como usado com sucesso");
 
   return {
     ownerUid: data.ownerUid,
@@ -145,12 +149,14 @@ export async function consumeStudentInvite(
 export async function cleanupExpiredStudentInvites(
   ownerUid: string
 ): Promise<void> {
+  // Busca a academia do owner
+  const academy = await getAcademy(ownerUid);
+  if (!academy) return;
+
+  const gymId = (academy as any).id || ownerUid;
+  const invitesRef = collection(db, "academies", gymId, "studentInvites");
+  const snaps = await getDocs(invitesRef);
   const now = new Date();
-  const q = query(
-    collection(db, "studentInvites"),
-    where("ownerUid", "==", ownerUid)
-  );
-  const snaps = await getDocs(q);
 
   const toDelete: Promise<void>[] = [];
   snaps.forEach((docSnap) => {
@@ -158,7 +164,9 @@ export async function cleanupExpiredStudentInvites(
     const expiresAt = data.expiresAt?.toDate?.() || new Date(data.expiresAt);
     // Só remove se expirou E não foi usado
     if (now > expiresAt && !data.usedBy) {
-      toDelete.push(deleteDoc(docSnap.ref));
+      toDelete.push(
+        deleteDoc(doc(db, "academies", gymId, "studentInvites", docSnap.id))
+      );
     }
   });
 

@@ -1,21 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Modal,
-  StyleSheet,
-  SafeAreaView,
-} from "react-native";
-import { BlurView } from "expo-blur";
-import { useAuth } from "@/context/AuthContext";
 import { ThemedButton } from "@/components/ThemedButton";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Colors } from "@/constants/theme";
-import { GlobalStyles } from "@/constants/styles";
 import { UserAvatar } from "@/components/UserAvatar";
+import { GlobalStyles } from "@/constants/styles";
+import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { makeMockStudents } from "@/utils/mock-data";
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
+import { Modal, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const { user, justSignedIn, ackJustSignedIn } = useAuth();

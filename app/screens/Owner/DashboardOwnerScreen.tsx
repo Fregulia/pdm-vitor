@@ -1,9 +1,11 @@
+import { MenuButton } from "@/components/MenuButton";
 import { UserAvatar } from "@/components/UserAvatar";
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getAcademy } from "@/services/academy";
+import { getExercises, populateDefaultExercises } from "@/services/exercises";
 import { db } from "@/services/firebase";
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -17,13 +19,13 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OwnerDashboardPage() {
   const colorScheme = useColorScheme() ?? "light";
@@ -42,6 +44,7 @@ export default function OwnerDashboardPage() {
     students: 0,
     classes: 0,
   });
+  const [exercisesMigrated, setExercisesMigrated] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -53,9 +56,29 @@ export default function OwnerDashboardPage() {
         const gymId = (academy as any)?.id as string | undefined;
 
         if (!gymId) {
-          console.log("[DashboardOwner] Academia não configurada ainda");
+
           setLoading(false);
           return;
+        }
+
+        // Migração automática: verifica se a academia tem exercícios
+        const exercises = await getExercises(gymId);
+        if (exercises.length === 0) {
+          console.log(
+            "[DashboardOwner] Migração: populando exercícios para academia existente..."
+          );
+          try {
+            await populateDefaultExercises(gymId);
+            console.log(
+              "[DashboardOwner] ✅ Exercícios populados com sucesso (migração)"
+            );
+            setExercisesMigrated(true);
+          } catch (error) {
+            console.error(
+              "[DashboardOwner] Erro ao popular exercícios na migração:",
+              error
+            );
+          }
         }
 
         const teachersRef = collection(db, "academies", gymId, "teachers");
@@ -143,11 +166,39 @@ export default function OwnerDashboardPage() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
+      <MenuButton />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Notificação de migração de exercícios */}
+        {exercisesMigrated && (
+          <View
+            style={[
+              styles.migrationNotice,
+              {
+                backgroundColor: Colors[colorScheme].tint + "15",
+                borderColor: Colors[colorScheme].tint,
+              },
+            ]}
+          >
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color={Colors[colorScheme].tint}
+            />
+            <Text
+              style={[
+                styles.migrationText,
+                { color: Colors[colorScheme].tint },
+              ]}
+            >
+              36 exercícios foram adicionados à sua academia! 🎉
+            </Text>
+          </View>
+        )}
+
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -172,7 +223,7 @@ export default function OwnerDashboardPage() {
               styles.statCard,
               { backgroundColor: Colors[colorScheme].card },
             ]}
-            onPress={() => router.push("/(owner)/(tabs)/teachers")}
+            onPress={() => router.push("/(owner)/(drawer)/teachers")}
           >
             <View
               style={[
@@ -206,7 +257,7 @@ export default function OwnerDashboardPage() {
               styles.statCard,
               { backgroundColor: Colors[colorScheme].card },
             ]}
-            onPress={() => router.push("/(owner)/(tabs)/students")}
+            onPress={() => router.push("/(owner)/(drawer)/students")}
           >
             <View
               style={[
@@ -235,11 +286,12 @@ export default function OwnerDashboardPage() {
             </Text>
           </TouchableOpacity>
 
-          <View
+          <TouchableOpacity
             style={[
               styles.statCard,
               { backgroundColor: Colors[colorScheme].card },
             ]}
+            onPress={() => router.push("/(owner)/(drawer)/classes")}
           >
             <View
               style={[
@@ -266,7 +318,7 @@ export default function OwnerDashboardPage() {
             >
               Turmas
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Professores recentes */}
@@ -283,7 +335,7 @@ export default function OwnerDashboardPage() {
               Professores Recentes
             </Text>
             <TouchableOpacity
-              onPress={() => router.push("/(owner)/(tabs)/teachers")}
+              onPress={() => router.push("/(owner)/(drawer)/teachers")}
             >
               <Text
                 style={{ color: Colors[colorScheme].tint, fontWeight: "600" }}
@@ -365,7 +417,7 @@ export default function OwnerDashboardPage() {
               Alunos Recentes
             </Text>
             <TouchableOpacity
-              onPress={() => router.push("/(owner)/(tabs)/students")}
+              onPress={() => router.push("/(owner)/(drawer)/students")}
             >
               <Text
                 style={{ color: Colors[colorScheme].tint, fontWeight: "600" }}
@@ -453,7 +505,7 @@ export default function OwnerDashboardPage() {
               styles.quickAction,
               { borderBottomColor: Colors[colorScheme].border },
             ]}
-            onPress={() => router.push("/(owner)/(tabs)/teachers")}
+            onPress={() => router.push("/(owner)/(drawer)/teachers")}
           >
             <View
               style={[
@@ -487,7 +539,7 @@ export default function OwnerDashboardPage() {
               styles.quickAction,
               { borderBottomColor: Colors[colorScheme].border },
             ]}
-            onPress={() => router.push("/(owner)/(tabs)/students")}
+            onPress={() => router.push("/(owner)/(drawer)/students")}
           >
             <View
               style={[
@@ -518,7 +570,7 @@ export default function OwnerDashboardPage() {
 
           <TouchableOpacity
             style={[styles.quickAction, { borderBottomWidth: 0 }]}
-            onPress={() => router.push("/(owner)/(tabs)/academy")}
+            onPress={() => router.push("/(owner)/(drawer)/academy")}
           >
             <View
               style={[
@@ -555,6 +607,20 @@ export default function OwnerDashboardPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  migrationNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 12,
+  },
+  migrationText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
   },
   header: {
     flexDirection: "row",

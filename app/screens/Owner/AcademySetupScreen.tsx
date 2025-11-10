@@ -11,6 +11,7 @@ import {
   isAcademyComplete,
   saveAcademy,
 } from "@/services/academy";
+import { populateDefaultExercises } from "@/services/exercises";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -70,7 +71,7 @@ export default function AcademySetupScreen() {
           });
         }
         if (isAcademyComplete(data)) {
-          router.replace({ pathname: "/(owner)/(tabs)/dashboard" } as any);
+          router.replace({ pathname: "/(owner)/(drawer)/dashboard" } as any);
         }
       }
     })();
@@ -98,8 +99,12 @@ export default function AcademySetupScreen() {
     try {
       setLoading(true);
       await saveAcademy(user.uid, { name, address, contact, hours });
+
+      // Populate default exercises for the academy
+      await populateDefaultExercises(user.uid);
+
       Alert.alert("Salvo", "Informações da academia salvas com sucesso.");
-      router.replace({ pathname: "/(owner)/(tabs)/dashboard" } as any);
+      router.replace({ pathname: "/(owner)/(drawer)/dashboard" } as any);
     } catch (e: any) {
       Alert.alert("Erro", e?.message || "Não foi possível salvar.");
     } finally {

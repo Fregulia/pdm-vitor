@@ -11,13 +11,13 @@ import { collection, getCountFromServer } from "firebase/firestore";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AcademyViewScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -506,7 +506,7 @@ export default function AcademyViewScreen() {
               styles.actionButton,
               { borderBottomColor: Colors[colorScheme].border },
             ]}
-            onPress={() => router.push("/(owner)/(tabs)/teachers")}
+            onPress={() => router.push("/(owner)/(drawer)/teachers")}
           >
             <View
               style={[
@@ -534,7 +534,7 @@ export default function AcademyViewScreen() {
 
           <TouchableOpacity
             style={[styles.actionButton, { borderBottomWidth: 0 }]}
-            onPress={() => router.push("/(owner)/(tabs)/students")}
+            onPress={() => router.push("/(owner)/(drawer)/students")}
           >
             <View
               style={[

@@ -1,3 +1,4 @@
+import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { TimeInput } from "@/components/TimeInput";
@@ -80,7 +81,7 @@ export default function AcademyInfoScreen() {
       setLoading(true);
       await saveAcademy(user.uid, { name, address, contact, hours });
       // Após salvar, redireciona para a página de informações da academia (tab do owner)
-      router.replace({ pathname: "/(owner)/(tabs)/academy" } as any);
+      router.replace({ pathname: "/(owner)/(drawer)/academy" } as any);
     } catch (e: any) {
       Alert.alert("Erro", e?.message || "Não foi possível salvar.");
     } finally {
@@ -98,6 +99,7 @@ export default function AcademyInfoScreen() {
         <View
           style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}
         >
+          <MenuButton />
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{

@@ -69,6 +69,8 @@ export const ThemedInput = React.forwardRef<TextInput, ThemedInputProps>(
             secureTextEntry={secureTextEntry && !isPasswordVisible}
             style={[styles.input, props.style]}
             placeholderTextColor={Colors[colorScheme].secondaryText}
+            autoCorrect={false}
+            importantForAutofill="yes"
           />
           {secureTextEntry && (
             <TouchableOpacity

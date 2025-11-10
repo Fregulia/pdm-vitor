@@ -169,12 +169,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Não falhar o signup se o Firestore estiver com regras desatualizadas
         console.warn("Falha ao salvar perfil no Firestore:", err);
       }
-      // Envia e-mail de verificação para o novo usuário
-      try {
-        await sendEmailVerification(cred.user);
-      } catch (err) {
-        console.warn("Falha ao enviar e-mail de verificação:", err);
-      }
+      // TEMPORARIAMENTE DESABILITADO: Envia e-mail de verificação para o novo usuário
+      // try {
+      //   await sendEmailVerification(cred.user);
+      // } catch (err) {
+      //   console.warn("Falha ao enviar e-mail de verificação:", err);
+      // }
     } finally {
       setLoading(false);
     }

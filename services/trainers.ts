@@ -72,33 +72,24 @@ export async function getTrainerContext(trainerUid?: string): Promise<{
   gymId: string;
 } | null> {
   const uid = trainerUid || auth.currentUser?.uid;
-  console.log("[getTrainerContext] UID:", uid);
   if (!uid) return null;
 
   // Método 1: Tenta via perfil /users (mais rápido e confiável)
   try {
-    console.log("[getTrainerContext] Tentando via perfil /users...");
     const uref = doc(db, "users", uid);
     const usnap = await getDoc(uref);
-    console.log("[getTrainerContext] Perfil existe:", usnap.exists());
     if (usnap.exists()) {
       const pdata = usnap.data() as any;
-      console.log("[getTrainerContext] Dados do perfil:", pdata);
       if (pdata?.owner_id && pdata?.gym_id) {
-        console.log("[getTrainerContext] ✓ Retornando do perfil:", {
-          ownerUid: pdata.owner_id,
-          gymId: pdata.gym_id,
-        });
         return { ownerUid: pdata.owner_id, gymId: pdata.gym_id };
       }
     }
-  } catch (err) {
-    console.error("[getTrainerContext] Erro ao buscar via users:", err);
+  } catch {
+    // Silently fail and try next method
   }
 
   // Método 2: usa invites usados por este uid para descobrir o contexto
   try {
-    console.log("[getTrainerContext] Tentando via invites...");
     const invitesRef = collection(db, "invites");
     const iq = query(
       invitesRef,
@@ -107,66 +98,56 @@ export async function getTrainerContext(trainerUid?: string): Promise<{
       qLimit(1)
     );
     const iSnaps = await getDocs(iq);
-    console.log("[getTrainerContext] Invites encontrados:", iSnaps.docs.length);
     if (!iSnaps.empty) {
       const inv = iSnaps.docs[0].data() as any;
       const ownerUid = inv.ownerUid;
       const gymId = inv.gymId;
-      console.log("[getTrainerContext] Dados do invite:", { ownerUid, gymId });
       if (ownerUid && gymId) {
         // Backfill no perfil para próxima vez
-        console.log("[getTrainerContext] Fazendo backfill do perfil...");
         try {
           await setDoc(
             doc(db, "users", uid),
             { owner_id: ownerUid, gym_id: gymId },
             { merge: true }
           );
-        } catch (e) {
-          console.error("[getTrainerContext] Erro ao fazer backfill:", e);
+        } catch {
+          // Silently fail backfill
         }
-        console.log("[getTrainerContext] ✓ Retornando do invite:", {
-          ownerUid,
-          gymId,
-        });
         return { ownerUid, gymId };
       }
     }
-  } catch (err) {
-    console.error("[getTrainerContext] Erro ao buscar via invites:", err);
+  } catch {
+    // Silently fail and try next method
   }
 
   // Método 3: collectionGroup como último recurso (pode ter problemas de permissão)
   try {
-    console.log("[getTrainerContext] Tentando collectionGroup teachers...");
     const cg = collectionGroup(db, "teachers");
     const q = query(cg, where("uid", "==", uid));
     const snaps = await getDocs(q);
-    console.log(
-      "[getTrainerContext] Documentos encontrados no collectionGroup:",
-      snaps.docs.length
-    );
     if (!snaps.empty) {
       const docSnap = snaps.docs[0];
       const data = docSnap.data() as any;
-      console.log("[getTrainerContext] Dados do documento teacher:", data);
       if (data?.owner_id && data?.gym_id) {
-        console.log("[getTrainerContext] ✓ Retornando do collectionGroup:", {
-          ownerUid: data.owner_id,
-          gymId: data.gym_id,
-        });
         return { ownerUid: data.owner_id, gymId: data.gym_id };
       }
     }
-  } catch (err) {
-    console.error(
-      "[getTrainerContext] CollectionGroup falhou (isso é esperado se houver problemas de permissão):",
-      err
-    );
+  } catch {
+    // CollectionGroup can fail due to permissions, that's expected
   }
 
-  console.log(
-    "[getTrainerContext] ✗ Nenhum contexto encontrado, retornando null"
-  );
   return null;
+}
+
+/**
+ * Busca todos os professores de uma academia
+ */
+export async function getTrainers(gymId: string): Promise<Trainer[]> {
+  const trainersRef = collection(db, "academies", gymId, "teachers");
+  const snapshot = await getDocs(trainersRef);
+
+  return snapshot.docs.map((doc) => ({
+    ...doc.data(),
+    uid: doc.id,
+  })) as Trainer[];
 }

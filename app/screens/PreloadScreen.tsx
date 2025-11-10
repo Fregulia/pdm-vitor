@@ -30,11 +30,11 @@ export default function PreloadScreen() {
         return;
       }
 
-      // Se o e-mail não estiver verificado, redireciona para confirmar
-      if (!user.emailVerified) {
-        router.replace({ pathname: "/auth/confirm-email" } as any);
-        return;
-      }
+      // TEMPORARIAMENTE DESABILITADO: Se o e-mail não estiver verificado, redireciona para confirmar
+      // if (!user.emailVerified) {
+      //   router.replace({ pathname: "/auth/confirm-email" } as any);
+      //   return;
+      // }
 
       // Obtem o perfil para decidir o fluxo
       try {
@@ -53,7 +53,7 @@ export default function PreloadScreen() {
             router.replace({ pathname: "/setup" } as any);
           } else {
             // Owner completo vai para o dashboard dentro das abas do owner
-            router.replace({ pathname: "/(owner)/(tabs)/dashboard" } as any);
+            router.replace({ pathname: "/(owner)/(drawer)/dashboard" } as any);
           }
           return;
         }

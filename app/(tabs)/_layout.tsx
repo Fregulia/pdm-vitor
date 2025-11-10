@@ -1,11 +1,10 @@
 import { Redirect, Tabs } from "expo-router";
-import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAuth } from "@/context/AuthContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 // DEFINE AS ABAS DE NAVEGAÇÃO
 export default function TabLayout() {
@@ -60,6 +59,7 @@ export default function TabLayout() {
         name="proposta"
         options={{
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
     </Tabs>

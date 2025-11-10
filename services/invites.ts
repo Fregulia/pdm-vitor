@@ -6,10 +6,8 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   setDoc,
-  where,
 } from "firebase/firestore";
 
 export type Invite = {
@@ -38,9 +36,9 @@ export async function createInvite(ownerUid: string, _gymId?: string) {
   }
   const gymId = (academy as any).id || academy.ownerUid; // id deve existir; fallback seguro
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  // gera código e cria doc em /invites/{code}
+  // gera código e cria doc em /academies/{gymId}/invites/{code}
   const code = randomCode(8);
-  const ref = doc(db, "invites", code);
+  const ref = doc(db, "academies", gymId, "invites", code);
   const inv: Invite = {
     code,
     expiresAt: expiresAt as any,
@@ -54,10 +52,25 @@ export async function createInvite(ownerUid: string, _gymId?: string) {
 }
 
 export async function consumeInvite(code: string, usedByUid: string) {
-  const ref = doc(db, "invites", code);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("CODE_NOT_FOUND");
-  const data = snap.data() as Invite;
+  // Precisamos buscar o convite em todas as academias
+  // Para isso, vamos usar uma collection group query
+  const academiesSnap = await getDocs(collection(db, "academies"));
+
+  let inviteDoc = null;
+
+  // Procura o convite em todas as academias
+  for (const academyDoc of academiesSnap.docs) {
+    const ref = doc(db, "academies", academyDoc.id, "invites", code);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      inviteDoc = snap;
+      break;
+    }
+  }
+
+  if (!inviteDoc) throw new Error("CODE_NOT_FOUND");
+
+  const data = inviteDoc.data() as Invite;
   // verifica expiração
   const expVal: any = (data as any).expiresAt;
   const expDate: Date | null = expVal?.toDate
@@ -72,7 +85,7 @@ export async function consumeInvite(code: string, usedByUid: string) {
   if (data.usedBy) throw new Error("CODE_ALREADY_USED");
   // marca como usado
   await setDoc(
-    ref,
+    inviteDoc.ref,
     { usedBy: usedByUid, usedAt: serverTimestamp() },
     { merge: true }
   );
@@ -82,9 +95,13 @@ export async function consumeInvite(code: string, usedByUid: string) {
 
 // Limpa convites expirados para um owner
 export async function cleanupExpiredInvites(ownerUid: string) {
-  const invitesRef = collection(db, "invites");
-  const q = query(invitesRef, where("ownerUid", "==", ownerUid));
-  const snaps = await getDocs(q);
+  // Busca a academia do owner
+  const academy = await getAcademy(ownerUid);
+  if (!academy) return;
+
+  const gymId = (academy as any).id || ownerUid;
+  const invitesRef = collection(db, "academies", gymId, "invites");
+  const snaps = await getDocs(invitesRef);
   const now = Date.now();
   await Promise.all(
     snaps.docs.map(async (d) => {
@@ -92,7 +109,7 @@ export async function cleanupExpiredInvites(ownerUid: string) {
       const exp = data.expiresAt?.toDate?.() ?? data.expiresAt;
       if (exp && new Date(exp).getTime() < now && !data.usedBy) {
         try {
-          await deleteDoc(doc(db, "invites", d.id));
+          await deleteDoc(doc(db, "academies", gymId, "invites", d.id));
         } catch {}
       }
     })

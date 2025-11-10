@@ -58,6 +58,47 @@ service cloud.firestore {
         allow delete: if request.auth != null && (isOwner(gymId) || request.auth.uid == sid);
       }
 
+      // Subcoleção EXERCISES: owner pode criar/editar/deletar; trainers podem criar (custom exercises) e ler
+      match /exercises/{exerciseId} {
+        allow read: if request.auth != null;
+        // criação: owner ou qualquer trainer da academia
+        allow create: if request.auth != null && (
+          isOwner(gymId) ||
+          exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid))
+        );
+        // atualização/exclusão: apenas owner
+        allow update, delete: if isOwner(gymId);
+      }
+
+      // Subcoleção WORKOUTS: trainers podem criar/editar/deletar seus próprios treinos; owner pode ler todos
+      match /workouts/{workoutId} {
+        allow read: if request.auth != null;
+        // criação: apenas trainers da academia (validando que trainerId == auth.uid)
+        allow create: if request.auth != null &&
+          exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid)) &&
+          request.resource.data.trainerId == request.auth.uid;
+        // atualização/exclusão: apenas o trainer que criou ou o owner
+        allow update, delete: if request.auth != null && (
+          resource.data.trainerId == request.auth.uid ||
+          isOwner(gymId)
+        );
+      }
+
+      // Subcoleção WORKOUT_ASSIGNMENTS: atribuições de treinos para alunos em turmas
+      match /workout_assignments/{assignmentId} {
+        // leitura: owner, trainers e o próprio aluno podem ler
+        allow read: if request.auth != null && (
+          isOwner(gymId) ||
+          exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid)) ||
+          resource.data.studentId == request.auth.uid
+        );
+        // criação/atualização/exclusão: apenas trainers ou owner
+        allow create, update, delete: if request.auth != null && (
+          isOwner(gymId) ||
+          exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid))
+        );
+      }
+
       // Outras subcoleções continuam restritas ao owner
       match /{document=**} {
         allow read: if request.auth != null;
