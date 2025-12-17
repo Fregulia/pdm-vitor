@@ -1,3 +1,3 @@
-import DashboardStudentScreen from "../../screens/Student/DashboardStudentScreen";
+import DashboardStudentScreen from "../../../screens/Student/DashboardStudentScreen";
 
 export default DashboardStudentScreen;

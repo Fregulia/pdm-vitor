@@ -1,3 +1,3 @@
-import TrainerClassDetailScreen from "@/app/screens/Trainer/TrainerClassDetailScreen";
+import TrainerClassDetailScreen from "@/screens/Trainer/TrainerClassDetailScreen";
 
 export default TrainerClassDetailScreen;

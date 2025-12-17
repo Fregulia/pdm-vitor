@@ -8,16 +8,30 @@ import {
   DrawerContentScrollView,
   DrawerItemList,
 } from "@react-navigation/drawer";
-import { useRouter } from "expo-router";
-import React from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function CustomDrawer(props: DrawerContentComponentProps) {
   const colorScheme = useColorScheme() ?? "light";
-  const { user, signOut } = useAuth();
+  const { user, signOut, getProfile } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        try {
+          const profile = await getProfile();
+          setUserProfile(profile);
+        } catch (error) {
+          console.error("Erro ao carregar perfil no drawer:", error);
+        }
+      })();
+    }, [getProfile])
+  );
 
   const handleSignOut = () => {
     Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
@@ -62,7 +76,11 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
         onPress={handleProfilePress}
         activeOpacity={0.8}
       >
-        <UserAvatar name={user?.displayName || "Owner"} size={64} />
+        <UserAvatar
+          name={user?.displayName || "Owner"}
+          size={64}
+          photoUrl={userProfile?.photoUrl}
+        />
         <Text style={styles.userName}>{user?.displayName || "Owner"}</Text>
         <Text style={styles.userEmail}>{user?.email || ""}</Text>
       </TouchableOpacity>

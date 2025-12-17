@@ -1,4 +1,4 @@
-import AcademyViewScreen from "@/app/screens/Owner/AcademyViewScreen";
+import AcademyViewScreen from "@/screens/Owner/AcademyViewScreen";
 import React from "react";
 
 export default function OwnerAcademyPage() {

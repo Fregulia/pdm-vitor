@@ -1,5 +1,5 @@
 import React from "react";
-import TrainerStudentsScreen from "../../screens/Trainer/StudentsScreen";
+import TrainerStudentsScreen from "../../../screens/Trainer/StudentsScreen";
 
 export default function TrainerStudentsRoute() {
   return <TrainerStudentsScreen />;

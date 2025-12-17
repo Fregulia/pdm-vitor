@@ -1,4 +1,3 @@
-import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { TimeInput } from "@/components/TimeInput";
@@ -6,7 +5,13 @@ import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getAcademy, Hours, saveAcademy } from "@/services/academy";
+import {
+  getAcademy,
+  Hours,
+  isAcademyComplete,
+  saveAcademy,
+} from "@/services/academy";
+import { populateDefaultExercises } from "@/services/exercises";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -21,10 +26,10 @@ import {
   View,
 } from "react-native";
 
-export default function AcademyInfoScreen() {
+export default function AcademySetupScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const colorScheme = useColorScheme() ?? "light";
-  const router = useRouter();
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -39,49 +44,71 @@ export default function AcademyInfoScreen() {
   const nameRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
   const contactRef = useRef<TextInput>(null);
-  // No hoursRef since time inputs are custom components
 
   useEffect(() => {
     (async () => {
       if (!user?.uid) return;
-      setLoading(true);
-      try {
-        const data = await getAcademy(user.uid);
-        if (data) {
-          setName(data.name || "");
-          setAddress(data.address || "");
-          setContact(data.contact || "");
-          const h: any = (data as any).hours;
-          if (h && typeof h !== "string") {
-            setHours({
-              weekdays: {
-                open: h.weekdays?.open || "",
-                close: h.weekdays?.close || "",
-              },
-              saturday: {
-                open: h.saturday?.open || "",
-                close: h.saturday?.close || "",
-              },
-              sunday: {
-                open: h.sunday?.open || "",
-                close: h.sunday?.close || "",
-              },
-            });
-          }
+      const data = await getAcademy(user.uid);
+      if (data) {
+        setName(data.name || "");
+        setAddress(data.address || "");
+        setContact(data.contact || "");
+        const h: any = (data as any).hours;
+        if (h && typeof h !== "string") {
+          setHours({
+            weekdays: {
+              open: h.weekdays?.open || "",
+              close: h.weekdays?.close || "",
+            },
+            saturday: {
+              open: h.saturday?.open || "",
+              close: h.saturday?.close || "",
+            },
+            sunday: {
+              open: h.sunday?.open || "",
+              close: h.sunday?.close || "",
+            },
+          });
         }
-      } finally {
-        setLoading(false);
+        if (isAcademyComplete(data)) {
+          router.replace({ pathname: "/(owner)/(drawer)/dashboard" } as any);
+        }
       }
     })();
-  }, [user?.uid]);
+  }, [user?.uid, router]);
 
   const onSave = async () => {
     if (!user?.uid) return;
+    if (
+      !name ||
+      !address ||
+      !contact ||
+      !hours.weekdays.open ||
+      !hours.weekdays.close ||
+      !hours.saturday.open ||
+      !hours.saturday.close ||
+      !hours.sunday.open ||
+      !hours.sunday.close
+    ) {
+      Alert.alert(
+        "Campos obrigatórios",
+        "Preencha todas as informações da academia."
+      );
+      return;
+    }
     try {
       setLoading(true);
-      await saveAcademy(user.uid, { name, address, contact, hours });
-      // Após salvar, redireciona para a página de informações da academia (tab do owner)
-      router.replace({ pathname: "/(owner)/(drawer)/academy" } as any);
+      const academyId = await saveAcademy(user.uid, {
+        name,
+        address,
+        contact,
+        hours,
+      });
+
+      // Populate default exercises for the created/updated academy document
+      await populateDefaultExercises(academyId);
+
+      router.replace({ pathname: "/(owner)/plans-initial-setup" } as any);
     } catch (e: any) {
       Alert.alert("Erro", e?.message || "Não foi possível salvar.");
     } finally {
@@ -99,7 +126,6 @@ export default function AcademyInfoScreen() {
         <View
           style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}
         >
-          <MenuButton />
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{
@@ -110,7 +136,10 @@ export default function AcademyInfoScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Text
-              style={[GlobalStyles.title, { color: Colors[colorScheme].text }]}
+              style={[
+                GlobalStyles.title,
+                { color: Colors[colorScheme].text, marginBottom: 8 },
+              ]}
             >
               Informações da Academia
             </Text>
@@ -120,12 +149,11 @@ export default function AcademyInfoScreen() {
                 { color: Colors[colorScheme].secondaryText },
               ]}
             >
-              Atualize os dados da sua academia.
+              Preencha os dados para continuar usando o app.
             </Text>
 
             <ThemedInput
               placeholder="Nome da academia"
-              value={name}
               onChangeText={setName}
               ref={nameRef}
               returnKeyType="next"
@@ -257,8 +285,9 @@ export default function AcademyInfoScreen() {
                 </View>
               </View>
             </View>
+
             <ThemedButton
-              title={loading ? "Salvando..." : "Salvar"}
+              title={loading ? "Salvando..." : "Salvar e continuar"}
               onPress={onSave}
               disabled={loading}
               style={{ marginTop: 16 }}

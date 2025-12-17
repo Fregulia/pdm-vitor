@@ -1,4 +1,4 @@
-import SignUpScreen from "@/app/screens/Auth/SignUpScreen";
+import SignUpScreen from "@/screens/Auth/SignUpScreen";
 import React from "react";
 
 export default function SignUpPage() {

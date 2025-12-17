@@ -1,3 +1,4 @@
+import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { TimeInput } from "@/components/TimeInput";
@@ -5,13 +6,8 @@ import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import {
-  getAcademy,
-  Hours,
-  isAcademyComplete,
-  saveAcademy,
-} from "@/services/academy";
-import { populateDefaultExercises } from "@/services/exercises";
+import { getAcademy, Hours, saveAcademy } from "@/services/academy";
+import { getCoordinatesFromAddress } from "@/services/location";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -25,11 +21,12 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import MapView, { Callout, Marker, UrlTile } from "react-native-maps";
 
-export default function AcademySetupScreen() {
-  const router = useRouter();
+export default function AcademyInfoScreen() {
   const { user } = useAuth();
   const colorScheme = useColorScheme() ?? "light";
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -39,72 +36,80 @@ export default function AcademySetupScreen() {
     saturday: { open: "", close: "" },
     sunday: { open: "", close: "" },
   });
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number }>({
+    latitude: -31.766143,
+    longitude: -52.351855,
+  });
+
   const [loading, setLoading] = useState(false);
 
   const nameRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
   const contactRef = useRef<TextInput>(null);
+  // No hoursRef since time inputs are custom components
 
   useEffect(() => {
     (async () => {
       if (!user?.uid) return;
-      const data = await getAcademy(user.uid);
-      if (data) {
-        setName(data.name || "");
-        setAddress(data.address || "");
-        setContact(data.contact || "");
-        const h: any = (data as any).hours;
-        if (h && typeof h !== "string") {
-          setHours({
-            weekdays: {
-              open: h.weekdays?.open || "",
-              close: h.weekdays?.close || "",
-            },
-            saturday: {
-              open: h.saturday?.open || "",
-              close: h.saturday?.close || "",
-            },
-            sunday: {
-              open: h.sunday?.open || "",
-              close: h.sunday?.close || "",
-            },
-          });
+      setLoading(true);
+      try {
+        const data = await getAcademy(user.uid);
+        if (data) {
+          setName(data.name || "");
+          setAddress(data.address || "");
+          setContact(data.contact || "");
+          const h: any = (data as any).hours;
+          if (h && typeof h !== "string") {
+            setHours({
+              weekdays: {
+                open: h.weekdays?.open || "",
+                close: h.weekdays?.close || "",
+              },
+              saturday: {
+                open: h.saturday?.open || "",
+                close: h.saturday?.close || "",
+              },
+              sunday: {
+                open: h.sunday?.open || "",
+                close: h.sunday?.close || "",
+              },
+            });
+          }
+          if (data.latitude && data.longitude) {
+            setCoords({ latitude: data.latitude, longitude: data.longitude });
+          }
         }
-        if (isAcademyComplete(data)) {
-          router.replace({ pathname: "/(owner)/(drawer)/dashboard" } as any);
-        }
+      } finally {
+        setLoading(false);
       }
     })();
-  }, [user?.uid, router]);
+  }, [user?.uid]);
 
   const onSave = async () => {
     if (!user?.uid) return;
-    if (
-      !name ||
-      !address ||
-      !contact ||
-      !hours.weekdays.open ||
-      !hours.weekdays.close ||
-      !hours.saturday.open ||
-      !hours.saturday.close ||
-      !hours.sunday.open ||
-      !hours.sunday.close
-    ) {
-      Alert.alert(
-        "Campos obrigatórios",
-        "Preencha todas as informações da academia."
-      );
-      return;
-    }
     try {
       setLoading(true);
-      await saveAcademy(user.uid, { name, address, contact, hours });
 
-      // Populate default exercises for the academy
-      await populateDefaultExercises(user.uid);
+      // Geocoding logic
+      let finalCoords = coords;
+      if (address) {
+        const found = await getCoordinatesFromAddress(address);
+        if (found) {
+          finalCoords = found;
+          setCoords(found);
+        }
+      }
 
-      Alert.alert("Salvo", "Informações da academia salvas com sucesso.");
-      router.replace({ pathname: "/(owner)/(drawer)/dashboard" } as any);
+      await saveAcademy(user.uid, {
+        name,
+        address,
+        contact,
+        hours,
+        latitude: finalCoords.latitude,
+        longitude: finalCoords.longitude
+      });
+      // Após salvar, redireciona para a página de informações da academia (tab do owner)
+      router.replace({ pathname: "/(owner)/(drawer)/academy" } as any);
     } catch (e: any) {
       Alert.alert("Erro", e?.message || "Não foi possível salvar.");
     } finally {
@@ -122,6 +127,7 @@ export default function AcademySetupScreen() {
         <View
           style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}
         >
+          <MenuButton />
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{
@@ -132,10 +138,7 @@ export default function AcademySetupScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Text
-              style={[
-                GlobalStyles.title,
-                { color: Colors[colorScheme].text, marginBottom: 8 },
-              ]}
+              style={[GlobalStyles.title, { color: Colors[colorScheme].text }]}
             >
               Informações da Academia
             </Text>
@@ -145,11 +148,12 @@ export default function AcademySetupScreen() {
                 { color: Colors[colorScheme].secondaryText },
               ]}
             >
-              Preencha os dados para continuar usando o app.
+              Atualize os dados da sua academia.
             </Text>
 
             <ThemedInput
               placeholder="Nome da academia"
+              value={name}
               onChangeText={setName}
               ref={nameRef}
               returnKeyType="next"
@@ -282,8 +286,93 @@ export default function AcademySetupScreen() {
               </View>
             </View>
 
+            <Text
+              style={{
+                color: Colors[colorScheme].text,
+                fontWeight: "600",
+                marginTop: 24,
+                marginBottom: 8,
+              }}
+            >
+              Localização
+            </Text>
+            <View
+              style={{
+                height: 250,
+                borderRadius: 12,
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: Colors[colorScheme].border,
+                marginBottom: 16,
+              }}
+            >
+              <MapView
+                style={{ flex: 1 }}
+                region={{
+                  latitude: coords.latitude,
+                  longitude: coords.longitude,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                }}
+              >
+                <UrlTile
+                  urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maximumZ={19}
+                  flipY={false}
+                  zIndex={100}
+                />
+
+                {/* Main Marker */}
+                <Marker
+                  coordinate={coords}
+                  title={name || "Minha Academia"}
+                  description={address}
+                >
+                  <Callout>
+                    <View style={{ minWidth: 100, padding: 5 }}>
+                      <Text style={{ fontWeight: 'bold' }}>{name || "Minha Academia"}</Text>
+                      <Text style={{ fontSize: 12 }}>{address}</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+
+                {/* Extra Marker 1 - Nearby */}
+                <Marker
+                  coordinate={{
+                    latitude: coords.latitude + 0.001,
+                    longitude: coords.longitude + 0.001,
+                  }}
+                  pinColor="blue"
+                >
+                  <Callout>
+                    <View style={{ minWidth: 100, padding: 5 }}>
+                      <Text style={{ fontWeight: 'bold' }}>Ponto de Referência 1</Text>
+                      <Text style={{ fontSize: 12 }}>Local próximo</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+
+                {/* Extra Marker 2 - Nearby */}
+                <Marker
+                  coordinate={{
+                    latitude: coords.latitude - 0.001,
+                    longitude: coords.longitude - 0.0005,
+                  }}
+                  pinColor="green"
+                >
+                  <Callout>
+                    <View style={{ minWidth: 100, padding: 5 }}>
+                      <Text style={{ fontWeight: 'bold' }}>Ponto de Referência 2</Text>
+                      <Text style={{ fontSize: 12 }}>Outro local próximo</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+
+              </MapView>
+            </View>
+
             <ThemedButton
-              title={loading ? "Salvando..." : "Salvar e continuar"}
+              title={loading ? "Salvando..." : "Salvar"}
               onPress={onSave}
               disabled={loading}
               style={{ marginTop: 16 }}

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import { Colors } from "@/constants/theme";
 
 // FUNÇÃO PARA GERAR A COR DE FUNDO DO AVATAR BASEADO NO NOME
@@ -27,10 +28,11 @@ const getInitials = (name: string) => {
 interface UserAvatarProps {
   name: string;
   size?: number;
+  photoUrl?: string | null;
 }
 
 // CRIA O AVATAR A PARTIR DAS PROPS
-export function UserAvatar({ name, size = 40 }: UserAvatarProps) {
+export function UserAvatar({ name, size = 40, photoUrl }: UserAvatarProps) {
   const initials = getInitials(name);
   const backgroundColor = getColorFromString(name);
 
@@ -43,18 +45,27 @@ export function UserAvatar({ name, size = 40 }: UserAvatarProps) {
       backgroundColor,
       justifyContent: "center",
       alignItems: "center",
+      overflow: "hidden",
     },
     text: {
       color: Colors.light.text,
       fontSize: size / 2.5,
       fontWeight: "bold",
     },
+    image: {
+      width: size,
+      height: size,
+    },
   });
 
   // RETORNA O CONTAINER MONTADO
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>{initials}</Text>
+      {photoUrl ? (
+        <Image source={{ uri: photoUrl }} style={styles.image} contentFit="cover" />
+      ) : (
+        <Text style={styles.text}>{initials}</Text>
+      )}
     </View>
   );
 }

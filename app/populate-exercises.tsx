@@ -1,3 +1,3 @@
-import PopulateExercisesScreen from "@/app/screens/Owner/PopulateExercisesScreen";
+import PopulateExercisesScreen from "@/screens/Owner/PopulateExercisesScreen";
 
 export default PopulateExercisesScreen;

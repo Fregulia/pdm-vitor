@@ -7,8 +7,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getAcademy } from "@/services/academy";
 import { getExercises, populateDefaultExercises } from "@/services/exercises";
 import { db } from "@/services/firebase";
+import { getUsersPhotoUrls } from "@/services/users";
 import { FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
   collection,
   getCountFromServer,
@@ -16,7 +17,7 @@ import {
   limit,
   query,
 } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -29,16 +30,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OwnerDashboardPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const { user } = useAuth();
+  const { user, getProfile } = useAuth();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [teachers, setTeachers] = useState<
-    { id: string; name: string; bio?: string }[]
+    { id: string; name: string; bio?: string; photoUrl?: string }[]
   >([]);
   const [students, setStudents] = useState<
-    { id: string; name: string; email?: string }[]
+    { id: string; name: string; email?: string; photoUrl?: string }[]
   >([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [counts, setCounts] = useState({
     teachers: 0,
     students: 0,
@@ -46,11 +48,12 @@ export default function OwnerDashboardPage() {
   });
   const [exercisesMigrated, setExercisesMigrated] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      if (!user?.uid) return;
-      setLoading(true);
-      try {
+  const loadData = useCallback(async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    try {
+      const profile = await getProfile();
+      setUserProfile(profile);
         // Busca o gymId da academia do owner
         const academy = await getAcademy(user.uid);
         const gymId = (academy as any)?.id as string | undefined;
@@ -102,11 +105,21 @@ export default function OwnerDashboardPage() {
           getDocs(query(studentsRef, limit(5))),
         ]);
 
+        // Busca fotos dos professores e alunos
+        const teacherIds = tDocs.docs.map((d) => d.id);
+        const studentIds = sDocs.docs.map((d) => d.id);
+
+        const [teacherPhotos, studentPhotos] = await Promise.all([
+          getUsersPhotoUrls(teacherIds),
+          getUsersPhotoUrls(studentIds),
+        ]);
+
         setTeachers(
           tDocs.docs.map((d) => ({
             id: d.id,
             name: d.data().name || "Sem nome",
             bio: d.data().bio,
+            photoUrl: teacherPhotos[d.id] || undefined,
           }))
         );
 
@@ -115,15 +128,25 @@ export default function OwnerDashboardPage() {
             id: d.id,
             name: d.data().name || "Sem nome",
             email: d.data().email,
+            photoUrl: studentPhotos[d.id] || undefined,
           }))
         );
       } catch (error) {
         console.error("[DashboardOwner] Erro ao carregar dados:", error);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [user?.uid]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid, getProfile]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const firstName = React.useMemo(() => {
     const candidate = (
@@ -213,7 +236,11 @@ export default function OwnerDashboardPage() {
               Visão geral da sua academia
             </Text>
           </View>
-          <UserAvatar name={user?.displayName || user?.email || ""} size={50} />
+          <UserAvatar
+            name={user?.displayName || user?.email || ""}
+            size={50}
+            photoUrl={userProfile?.photoUrl}
+          />
         </View>
 
         {/* Cards de estatísticas */}
@@ -371,7 +398,7 @@ export default function OwnerDashboardPage() {
           ) : (
             teachers.map((teacher) => (
               <View key={teacher.id} style={styles.listItem}>
-                <UserAvatar name={teacher.name} size={40} />
+                <UserAvatar name={teacher.name} size={40} photoUrl={teacher.photoUrl} />
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[
@@ -453,7 +480,7 @@ export default function OwnerDashboardPage() {
           ) : (
             students.map((student) => (
               <View key={student.id} style={styles.listItem}>
-                <UserAvatar name={student.name} size={40} />
+                <UserAvatar name={student.name} size={40} photoUrl={student.photoUrl} />
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[

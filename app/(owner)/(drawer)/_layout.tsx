@@ -80,6 +80,7 @@ export default function OwnerDrawerLayout() {
           ),
         }}
       />
+
       <Drawer.Screen
         name="profile"
         options={{

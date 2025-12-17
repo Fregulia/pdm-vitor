@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AcademyInfo, getAcademy, isAcademyComplete } from "@/services/academy";
 import { db } from "@/services/firebase";
+import { getPlans, Plan } from "@/services/plans";
 import { FontAwesome } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -17,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MapView, { Callout, Marker, UrlTile } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AcademyViewScreen() {
@@ -31,6 +33,7 @@ export default function AcademyViewScreen() {
     students: 0,
     classes: 0,
   });
+  const [plans, setPlans] = useState<Plan[]>([]);
 
   const load = useCallback(async () => {
     if (!user?.uid) return;
@@ -43,16 +46,18 @@ export default function AcademyViewScreen() {
       if (data) {
         const gymId = (data as any).id;
         if (gymId) {
-          const [teachersSnap, studentsSnap, classesSnap] = await Promise.all([
+          const [teachersSnap, studentsSnap, classesSnap, plansData] = await Promise.all([
             getCountFromServer(collection(db, "academies", gymId, "teachers")),
             getCountFromServer(collection(db, "academies", gymId, "students")),
             getCountFromServer(collection(db, "academies", gymId, "classes")),
+            getPlans(gymId),
           ]);
           setStats({
             teachers: teachersSnap.data().count,
             students: studentsSnap.data().count,
             classes: classesSnap.data().count,
           });
+          setPlans(plansData);
         }
       }
     } finally {
@@ -328,6 +333,100 @@ export default function AcademyViewScreen() {
           </View>
         </View>
 
+        {/* Localização Map */}
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: Colors[colorScheme].card },
+          ]}
+        >
+          <Text
+            style={[styles.sectionTitle, { color: Colors[colorScheme].text, marginBottom: 12 }]}
+          >
+            Localização
+          </Text>
+          <View
+            style={{
+              height: 250,
+              borderRadius: 12,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor: Colors[colorScheme].border,
+            }}
+          >
+            <MapView
+              style={{ flex: 1 }}
+              initialRegion={{
+                latitude: academy.latitude || -31.766143,
+                longitude: academy.longitude || -52.351855,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+              pitchEnabled={false}
+              rotateEnabled={false}
+              scrollEnabled={false}
+              zoomEnabled={false}
+            >
+              <UrlTile
+                urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maximumZ={19}
+                flipY={false}
+                zIndex={100}
+              />
+
+              {/* Main Marker */}
+              <Marker
+                coordinate={{
+                  latitude: academy.latitude || -31.766143,
+                  longitude: academy.longitude || -52.351855,
+                }}
+                title={academy.name}
+                description={academy.address}
+              >
+                <Callout>
+                  <View style={{ minWidth: 100, padding: 5 }}>
+                    <Text style={{ fontWeight: 'bold' }}>{academy.name}</Text>
+                    <Text style={{ fontSize: 12 }}>{academy.address}</Text>
+                  </View>
+                </Callout>
+              </Marker>
+
+              {/* Extra Marker 1 */}
+              <Marker
+                coordinate={{
+                  latitude: (academy.latitude || -31.766143) + 0.001,
+                  longitude: (academy.longitude || -52.351855) + 0.001,
+                }}
+                pinColor="blue"
+              >
+                <Callout>
+                  <View style={{ minWidth: 100, padding: 5 }}>
+                    <Text style={{ fontWeight: 'bold' }}>Ponto de Referência 1</Text>
+                    <Text style={{ fontSize: 12 }}>Local próximo</Text>
+                  </View>
+                </Callout>
+              </Marker>
+
+              {/* Extra Marker 2 */}
+              <Marker
+                coordinate={{
+                  latitude: (academy.latitude || -31.766143) - 0.001,
+                  longitude: (academy.longitude || -52.351855) - 0.0005,
+                }}
+                pinColor="green"
+              >
+                <Callout>
+                  <View style={{ minWidth: 100, padding: 5 }}>
+                    <Text style={{ fontWeight: 'bold' }}>Ponto de Referência 2</Text>
+                    <Text style={{ fontSize: 12 }}>Outro local próximo</Text>
+                  </View>
+                </Callout>
+              </Marker>
+
+            </MapView>
+          </View>
+        </View>
+
         {/* Horários de funcionamento */}
         <View
           style={[
@@ -368,6 +467,112 @@ export default function AcademyViewScreen() {
             label="Domingo"
             hours={`${academy.hours.sunday.open} - ${academy.hours.sunday.close}`}
             colorScheme={colorScheme}
+          />
+        </View>
+
+        {/* Planos */}
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: Colors[colorScheme].card },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <FontAwesome
+              name="tag"
+              size={20}
+              color={Colors[colorScheme].tint}
+            />
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: Colors[colorScheme].text, marginLeft: 8, marginBottom: 0 },
+              ]}
+            >
+              Planos da Academia
+            </Text>
+          </View>
+
+          {plans.length === 0 ? (
+            <Text
+              style={{
+                color: Colors[colorScheme].secondaryText,
+                fontSize: 14,
+                textAlign: "center",
+                paddingVertical: 16,
+              }}
+            >
+              Nenhum plano cadastrado
+            </Text>
+          ) : (
+            <View style={{ gap: 12, marginBottom: 12 }}>
+              {plans.map((plan) => (
+                <View
+                  key={plan.id}
+                  style={{
+                    padding: 12,
+                    borderRadius: 8,
+                    backgroundColor: Colors[colorScheme].background,
+                    borderWidth: 1,
+                    borderColor: Colors[colorScheme].border,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: Colors[colorScheme].text,
+                      fontSize: 16,
+                      fontWeight: "600",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {plan.title}
+                  </Text>
+                  <Text
+                    style={{
+                      color: Colors[colorScheme].secondaryText,
+                      fontSize: 14,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {plan.description}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: Colors[colorScheme].tint,
+                        fontSize: 18,
+                        fontWeight: "700",
+                      }}
+                    >
+                      R$ {plan.price.toFixed(2).replace(".", ",")}
+                    </Text>
+                    <Text
+                      style={{
+                        color: Colors[colorScheme].secondaryText,
+                        fontSize: 14,
+                      }}
+                    >
+                      {plan.validity === "daily" && "Diário"}
+                      {plan.validity === "monthly" && "Mensal"}
+                      {plan.validity === "quarterly" && "Trimestral"}
+                      {plan.validity === "annual" && "Anual"}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <ThemedButton
+            title="Editar Planos"
+            onPress={() => router.push({ pathname: "/(owner)/plans-setup" } as any)}
+            icon={<FontAwesome name="edit" size={16} color="#fff" />}
           />
         </View>
 

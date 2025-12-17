@@ -1,3 +1,3 @@
-import StudentsManagementScreen from "../../screens/Owner/StudentsManagementScreen";
+import StudentsManagementScreen from "../../../screens/Owner/StudentsManagementScreen";
 
 export default StudentsManagementScreen;

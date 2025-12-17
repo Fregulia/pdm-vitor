@@ -25,6 +25,8 @@ export type AcademyInfo = {
   ownerUid: string;
   createdAt?: any;
   updatedAt?: any;
+  latitude?: number;
+  longitude?: number;
 };
 
 // Busca a academia do owner por campo ownerUid (independe do ID do documento)
@@ -38,7 +40,19 @@ export async function getAcademy(
   );
   const snaps = await getDocs(q);
   if (snaps.empty) return null;
-  return snaps.docs[0].data() as AcademyInfo;
+  const first = snaps.docs[0];
+  const data = first.data() as any;
+  // Always surface the document id to callers; backfill "id" field if missing
+  const id = data.id || first.id;
+  if (!data.id) {
+    try {
+      const ref = doc(db, "academies", first.id);
+      await setDoc(ref, { id }, { merge: true });
+    } catch {
+      // best-effort; read path still returns id via spread below
+    }
+  }
+  return { ...data, id } as AcademyInfo;
 }
 
 // Recupera uma academia pelo seu ID de documento (gym_id)
@@ -81,7 +95,7 @@ function generateGymId(ownerUid: string): string {
 export async function saveAcademy(
   ownerUid: string,
   data: Partial<AcademyInfo>
-) {
+): Promise<string> {
   // Descobre se já existe academia para este owner
   const q = query(
     collection(db, "academies"),
@@ -110,6 +124,8 @@ export async function saveAcademy(
     },
     { merge: true }
   );
+
+  return targetId;
 }
 
 // Garante que o documento da academia possua um campo "id" igual ao seu doc.id

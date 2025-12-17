@@ -1,3 +1,3 @@
-import TrainerWorkoutPlansScreen from "@/app/screens/Trainer/TrainerWorkoutPlansScreen";
+import TrainerWorkoutPlansScreen from "@/screens/Trainer/TrainerWorkoutPlansScreen";
 
 export default TrainerWorkoutPlansScreen;

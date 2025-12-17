@@ -1,6 +1,6 @@
-import PropostaScreen from "@/app/screens/Info/PropostaScreen";
+import PropostaScreen from "@/screens/Info/PropostaScreen";
 
-import { default as React} from "react";
+import { default as React } from "react";
 
 export default function PropostaRoute() {
   return <PropostaScreen />;

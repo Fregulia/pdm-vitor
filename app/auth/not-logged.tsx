@@ -1,4 +1,4 @@
-import NotLoggedScreen from "@/app/screens/Auth/NotLoggedScreen";
+import NotLoggedScreen from "@/screens/Auth/NotLoggedScreen";
 import React from "react";
 
 export default function NotLoggedPage() {

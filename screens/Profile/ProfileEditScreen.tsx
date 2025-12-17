@@ -6,6 +6,7 @@ import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { pickAndUploadProfilePhoto, takeAndUploadProfilePhoto, deleteProfilePhoto } from "@/services/storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -17,6 +18,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
@@ -27,7 +29,9 @@ export default function ProfileEditScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const nameRef = useRef<TextInput>(null);
   const bioRef = useRef<TextInput>(null);
 
@@ -39,6 +43,7 @@ export default function ProfileEditScreen() {
         const data = await getProfile();
         setDisplayName(data?.displayName || user?.displayName || "");
         setBio(data?.bio || "");
+        setPhotoUrl(data?.photoUrl || null);
       } catch (error) {
         console.error("Failed to load profile for editing:", error);
         Alert.alert("Erro", "Não foi possível carregar os dados para edição.");
@@ -47,6 +52,74 @@ export default function ProfileEditScreen() {
       }
     })();
   }, [getProfile, user?.displayName]);
+
+  const handlePhotoOptions = () => {
+    Alert.alert(
+      "Foto de perfil",
+      "Escolha uma opção",
+      [
+        {
+          text: "Tirar foto",
+          onPress: async () => {
+            try {
+              setUploading(true);
+              const url = await takeAndUploadProfilePhoto();
+              if (url) {
+                setPhotoUrl(url);
+                await updateProfileDoc({ photoUrl: url });
+                Alert.alert("Sucesso", "Foto atualizada.");
+              }
+            } catch (e: any) {
+              Alert.alert("Erro", e?.message || "Não foi possível atualizar a foto.");
+            } finally {
+              setUploading(false);
+            }
+          },
+        },
+        {
+          text: "Escolher da galeria",
+          onPress: async () => {
+            try {
+              setUploading(true);
+              const url = await pickAndUploadProfilePhoto();
+              if (url) {
+                setPhotoUrl(url);
+                await updateProfileDoc({ photoUrl: url });
+                Alert.alert("Sucesso", "Foto atualizada.");
+              }
+            } catch (e: any) {
+              Alert.alert("Erro", e?.message || "Não foi possível atualizar a foto.");
+            } finally {
+              setUploading(false);
+            }
+          },
+        },
+        ...(photoUrl
+          ? [
+              {
+                text: "Remover foto",
+                style: "destructive" as const,
+                onPress: async () => {
+                  try {
+                    setUploading(true);
+                    await deleteProfilePhoto();
+                    setPhotoUrl(null);
+                    await updateProfileDoc({ photoUrl: null });
+                    Alert.alert("Sucesso", "Foto removida.");
+                  } catch (e: any) {
+                    Alert.alert("Erro", e?.message || "Não foi possível remover a foto.");
+                  } finally {
+                    setUploading(false);
+                  }
+                },
+              },
+            ]
+          : []),
+        { text: "Cancelar", style: "cancel" as const },
+      ],
+      { cancelable: true }
+    );
+  };
 
   // SALVA AS ALTERAÇÕES DO PERFIL
   const onSave = async () => {
@@ -93,25 +166,34 @@ export default function ProfileEditScreen() {
 
           {/* HEADER */}
           <View style={styles.headerSection}>
-            <View
-              style={[
-                styles.avatarContainer,
-                { backgroundColor: Colors[colorScheme].card },
-              ]}
-            >
-              <UserAvatar
-                name={displayName || user?.displayName || ""}
-                size={80}
-              />
+            <TouchableOpacity onPress={handlePhotoOptions} activeOpacity={0.7}>
               <View
                 style={[
-                  styles.editBadge,
-                  { backgroundColor: Colors[colorScheme].tint },
+                  styles.avatarContainer,
+                  { backgroundColor: Colors[colorScheme].card },
                 ]}
               >
-                <Ionicons name="camera" size={16} color="#FFF" />
+                {uploading ? (
+                  <View style={{ width: 80, height: 80, justifyContent: "center", alignItems: "center" }}>
+                    <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
+                  </View>
+                ) : (
+                  <UserAvatar
+                    name={displayName || user?.displayName || ""}
+                    size={80}
+                    photoUrl={photoUrl}
+                  />
+                )}
+                <View
+                  style={[
+                    styles.editBadge,
+                    { backgroundColor: Colors[colorScheme].tint },
+                  ]}
+                >
+                  <Ionicons name="camera" size={16} color="#FFF" />
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
             <Text
               style={[styles.headerTitle, { color: Colors[colorScheme].text }]}
             >

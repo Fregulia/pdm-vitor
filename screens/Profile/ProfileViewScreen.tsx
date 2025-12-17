@@ -107,6 +107,7 @@ export default function ProfileViewScreen() {
               <UserAvatar
                 name={profile?.displayName || user?.displayName || ""}
                 size={100}
+                photoUrl={profile?.photoUrl}
               />
             </View>
           </View>

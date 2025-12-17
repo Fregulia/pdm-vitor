@@ -60,6 +60,7 @@ type UserProfile = {
   displayName?: string;
   role?: "owner" | "trainer";
   bio?: string;
+  photoUrl?: string;
   createdAt?: any;
   updatedAt?: any;
 };
