@@ -17,6 +17,7 @@ export type Hours = {
   sunday: { open: string; close: string };
 };
 
+// TIPO DE DADOS - DOC DA ACADEMIA
 export type AcademyInfo = {
   name: string;
   address: string;
@@ -29,33 +30,34 @@ export type AcademyInfo = {
   longitude?: number;
 };
 
-// Busca a academia do owner por campo ownerUid (independe do ID do documento)
+// BUSCA ACADEMIA PELO ID DO OWNER LOGADO - PRELOAD
 export async function getAcademy(
   ownerUid: string
 ): Promise<AcademyInfo | null> {
+  // BUSCA
   const q = query(
     collection(db, "academies"),
     where("ownerUid", "==", ownerUid),
     limit(1)
   );
   const snaps = await getDocs(q);
+  // RETORNA NULL SE NÃO ACHAR
   if (snaps.empty) return null;
   const first = snaps.docs[0];
   const data = first.data() as any;
-  // Always surface the document id to callers; backfill "id" field if missing
   const id = data.id || first.id;
+  // CORREÇÃO DA V1: GARANTE QUE A ACADEMIA E O OWNER TENHAM ID DIFERENTES
   if (!data.id) {
     try {
       const ref = doc(db, "academies", first.id);
       await setDoc(ref, { id }, { merge: true });
     } catch {
-      // best-effort; read path still returns id via spread below
     }
   }
   return { ...data, id } as AcademyInfo;
 }
 
-// Recupera uma academia pelo seu ID de documento (gym_id)
+// BUSCA ACADEMIA PELO ID DA ACADEMIA - USADO PRA USO DOS CONVITES
 export async function getAcademyById(
   gymId: string
 ): Promise<AcademyInfo | null> {
@@ -64,6 +66,7 @@ export async function getAcademyById(
   return snap.exists() ? (snap.data() as AcademyInfo) : null;
 }
 
+// VERIFICA SE A ACADEMIA FOI CADASTRADA COMPLETAMENTE - LOGIN/PRELOAD
 export function isAcademyComplete(a?: Partial<AcademyInfo> | null): boolean {
   if (!a) return false;
   const h = (a as any)?.hours as Hours | string | undefined;
@@ -79,7 +82,7 @@ export function isAcademyComplete(a?: Partial<AcademyInfo> | null): boolean {
   return ok;
 }
 
-// Gera um ID de academia (gym_id) que não conflita com o ownerUid
+// GERA UM ID PRA ACADEMIA != DO OWNER - CRIAÇÃO DA ACADEMIA
 function generateGymId(ownerUid: string): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const make = () =>
@@ -92,11 +95,12 @@ function generateGymId(ownerUid: string): string {
   return id;
 }
 
+// SALVA/ATUALIZA ACADEMIA DO OWNER LOGADO - FORM DE EDIÇÃO
 export async function saveAcademy(
   ownerUid: string,
   data: Partial<AcademyInfo>
 ): Promise<string> {
-  // Descobre se já existe academia para este owner
+  // BUSCA
   const q = query(
     collection(db, "academies"),
     where("ownerUid", "==", ownerUid),
@@ -104,14 +108,14 @@ export async function saveAcademy(
   );
   const snaps = await getDocs(q);
   let targetId: string;
+  // SE NÃO ACHAR, CRIA ID NOVO
   if (snaps.empty) {
-    // cria com gym_id diferente do ownerUid
     targetId = generateGymId(ownerUid);
-  } else {
+  } else { // SE ACHAR SALVA O ID EXISTENTE
     const existingId = snaps.docs[0].id;
-    // se por acaso o id atual iguala o ownerUid, gera um novo para escrita futura
     targetId = existingId === ownerUid ? generateGymId(ownerUid) : existingId;
   }
+  // BUSCA O DOC DA ACADEMIA, E SETA OS DADOS
   const ref = doc(db, "academies", targetId);
   await setDoc(
     ref,
@@ -128,8 +132,7 @@ export async function saveAcademy(
   return targetId;
 }
 
-// Garante que o documento da academia possua um campo "id" igual ao seu doc.id
-// Garante que a academia do owner tenha um id (gym_id) diferente do ownerUid
+// FUNÇÃO NÃO USADA MAIS - FORÇA ID_ACADEMIA != ID_OWNER
 export async function ensureAcademyHasDifferentId(ownerUid: string) {
   const q = query(
     collection(db, "academies"),
@@ -151,10 +154,8 @@ export async function ensureAcademyHasDifferentId(ownerUid: string) {
     );
     return;
   }
-  // Se ainda é igual, cria um novo doc com ID novo e mantém o antigo (para compatibilidade de convites antigos)
   const newId = generateGymId(ownerUid);
   const newRef = doc(db, "academies", newId);
   const base = { ...data, id: newId, updatedAt: serverTimestamp() };
   await setDoc(newRef, base, { merge: true });
-  // Não removemos o antigo para não quebrar convites legados
 }

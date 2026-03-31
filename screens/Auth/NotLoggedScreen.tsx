@@ -1,9 +1,20 @@
+// COMPONENTES
 import { ThemedButton } from "@/components/ThemedButton";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+
+// REACT
 import React from "react";
+
+// REACT NATIVE
 import {
   ScrollView,
   StyleSheet,

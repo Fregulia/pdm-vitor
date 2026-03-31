@@ -1,10 +1,19 @@
+// COMPONENTES
 import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademy } from "@/services/academy";
 import { getExercises, populateDefaultExercises } from "@/services/exercises";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";

@@ -1,15 +1,24 @@
+// COMPONENTES
 import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademy } from "@/services/academy";
 import { db } from "@/services/firebase";
 import { createStudentInvite } from "@/services/studentInvites";
 import { Student, syncStudentData } from "@/services/students";
 import { Trainer } from "@/services/trainers";
+
+// BIBLIOTECAS EXTERNAS
 import { FontAwesome } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";

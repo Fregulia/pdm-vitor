@@ -20,6 +20,7 @@ export type Invite = {
   expiresAt?: any;
 };
 
+// GERA UM CÓDIGO PRO CONVITE - FUNÇÃO AUXILIAR
 function randomCode(len = 6) {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem 0/O/1/I
   let out = "";
@@ -28,17 +29,18 @@ function randomCode(len = 6) {
   return out;
 }
 
+// CRIA CONVITE PRA ACADEMIA - TRAINER/STUDENT
 export async function createInvite(ownerUid: string, _gymId?: string) {
-  // Busca o gymId atual pelo ownerUid (independente do ID do documento)
+  // BUSCA ACADEMIA DO OWNER
   const academy = await getAcademy(ownerUid);
   if (!academy?.name) {
     throw new Error("ACADEMY_NOT_FOUND");
   }
-  const gymId = (academy as any).id || academy.ownerUid; // id deve existir; fallback seguro
+  const gymId = (academy as any).id || academy.ownerUid;
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  // gera código e cria doc em /academies/{gymId}/invites/{code}
   const code = randomCode(8);
   const ref = doc(db, "academies", gymId, "invites", code);
+  // CRIA O CONVITE COM VALIDADE DE 24H
   const inv: Invite = {
     code,
     expiresAt: expiresAt as any,
@@ -51,14 +53,11 @@ export async function createInvite(ownerUid: string, _gymId?: string) {
   return code;
 }
 
+// MARCAR CONVITE COMO USADO - CRIAÇÃO DE CONTA TRAINER
 export async function consumeInvite(code: string, usedByUid: string) {
-  // Precisamos buscar o convite em todas as academias
-  // Para isso, vamos usar uma collection group query
+  // RECEBE O CÓDIGO DO SIGNUP E BUSCA O CONVITE POR ELE
   const academiesSnap = await getDocs(collection(db, "academies"));
-
   let inviteDoc = null;
-
-  // Procura o convite em todas as academias
   for (const academyDoc of academiesSnap.docs) {
     const ref = doc(db, "academies", academyDoc.id, "invites", code);
     const snap = await getDoc(ref);
@@ -67,35 +66,38 @@ export async function consumeInvite(code: string, usedByUid: string) {
       break;
     }
   }
-
+  
+  // SE NÃO ACHAR LANÇA ERRO
   if (!inviteDoc) throw new Error("CODE_NOT_FOUND");
 
   const data = inviteDoc.data() as Invite;
-  // verifica expiração
+
   const expVal: any = (data as any).expiresAt;
   const expDate: Date | null = expVal?.toDate
     ? expVal.toDate()
     : expVal
     ? new Date(expVal)
     : null;
+  // VERIFICA A VALIDADE DO CONVITE
   if (expDate && expDate.getTime() < Date.now()) {
-    // mantém convites expirados para auditoria, se desejar limpar use cleanupExpiredInvites
     throw new Error("CODE_EXPIRED");
   }
+  // VERIFICA SE JÁ FOI USADO
   if (data.usedBy) throw new Error("CODE_ALREADY_USED");
-  // marca como usado
+  
+  // MARCA O CONVITE COMO USADO, SALVANDO O ID NO DOCUMENTO
   await setDoc(
     inviteDoc.ref,
     { usedBy: usedByUid, usedAt: serverTimestamp() },
     { merge: true }
   );
-  // Retorna exatamente os valores vinculados ao convite
+  // RETORNA OS DADOS DO DONO DO CONVITE PRA USAR NO SIGNUP/DASHBOARD
   return { ownerUid: data.ownerUid, gymId: data.gymId };
 }
 
-// Limpa convites expirados para um owner
+// REMOVE CONVITES EXPIRADOS
 export async function cleanupExpiredInvites(ownerUid: string) {
-  // Busca a academia do owner
+  // BUSCA A ACADEMIA DO OWNER
   const academy = await getAcademy(ownerUid);
   if (!academy) return;
 
@@ -103,6 +105,8 @@ export async function cleanupExpiredInvites(ownerUid: string) {
   const invitesRef = collection(db, "academies", gymId, "invites");
   const snaps = await getDocs(invitesRef);
   const now = Date.now();
+  
+  // COMPARA A DATA DO CODIGO COM HOJE E DELETA SE TIVER EXPIRADO E NÃO TIVER SIDO USADO
   await Promise.all(
     snaps.docs.map(async (d) => {
       const data = d.data() as any;

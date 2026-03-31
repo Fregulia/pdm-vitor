@@ -1,26 +1,41 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+
+// FIREBASE
+
+// REACT
 import React, { useRef, useState } from "react";
+
+// REACT NATIVE
 import {
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 
 const styles = StyleSheet.create({

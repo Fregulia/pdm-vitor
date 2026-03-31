@@ -1,8 +1,15 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import {
   Class,
   deleteClass,
@@ -10,6 +17,8 @@ import {
   removeStudentsFromClass,
 } from "@/services/classes";
 import { db } from "@/services/firebase";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";

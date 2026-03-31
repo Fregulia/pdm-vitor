@@ -1,12 +1,23 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// ROTAS
 import { useRouter } from "expo-router";
+
+// REACT
 import React, { useRef, useState } from "react";
+
+// REACT NATIVE
 import {
   Alert,
   Keyboard,

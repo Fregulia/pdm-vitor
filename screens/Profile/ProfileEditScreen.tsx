@@ -1,26 +1,39 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { pickAndUploadProfilePhoto, takeAndUploadProfilePhoto, deleteProfilePhoto } from "@/services/storage";
+
+// SERVIÇOS
+import {
+    deleteProfilePhoto,
+    pickAndUploadProfilePhoto,
+    takeAndUploadProfilePhoto,
+} from "@/services/storage";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    ActivityIndicator,
+    Alert,
+    Keyboard,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 
 export default function ProfileEditScreen() {

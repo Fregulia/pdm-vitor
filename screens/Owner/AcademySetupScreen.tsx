@@ -1,10 +1,17 @@
+// COMPONENTES
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { TimeInput } from "@/components/TimeInput";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import {
   getAcademy,
   Hours,
@@ -12,8 +19,14 @@ import {
   saveAcademy,
 } from "@/services/academy";
 import { populateDefaultExercises } from "@/services/exercises";
+
+// ROTAS
 import { useRouter } from "expo-router";
+
+// REACT
 import React, { useEffect, useRef, useState } from "react";
+
+// REACT NATIVE
 import {
   Alert,
   Keyboard,

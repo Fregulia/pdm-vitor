@@ -11,15 +11,15 @@ import { AuthProvider } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function RootLayout() {
-  // Detect system theme
+  // Detecta cor do sistema
   const colorScheme = useColorScheme();
 
   return (
-    // Provide the theme to navigation
+    // Passa pra aplicação
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      {/* Auth context provider */}
+      {/* Auth Context */}
       <AuthProvider>
-        {/* Define routes */}
+        {/* Stack pra remover o header*/}
         <Stack
           initialRouteName="preload"
           screenOptions={{ headerShown: false }}

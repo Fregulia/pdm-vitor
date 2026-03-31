@@ -1,11 +1,20 @@
+// CONTEXTOS E HOOKS
 import { tryAutoSignIn, useAuth } from "@/context/AuthContext";
+
+// SERVIÇOS
 import {
   ensureAcademyHasDifferentId,
   getAcademy,
   isAcademyComplete,
 } from "@/services/academy";
+
+// ROTAS
 import { useRouter } from "expo-router";
+
+// REACT
 import React, { useEffect, useState } from "react";
+
+// REACT NATIVE
 import { ActivityIndicator, View } from "react-native";
 
 export default function PreloadScreen() {
@@ -30,7 +39,7 @@ export default function PreloadScreen() {
         return;
       }
 
-      // TEMPORARIAMENTE DESABILITADO: Se o e-mail não estiver verificado, redireciona para confirmar
+      // DESABILITADO POR ENQUANTO: VERIFICAÇÃO DE EMAIL
       // if (!user.emailVerified) {
       //   router.replace({ pathname: "/auth/confirm-email" } as any);
       //   return;

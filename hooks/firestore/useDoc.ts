@@ -9,28 +9,17 @@ import { useEffect, useState } from "react";
 import { errorEmitter } from "../../utils/firebase/error-emitter";
 import { FirestorePermissionError } from "../../utils/firebase/errors";
 
-/** Utility type to add an 'id' field to a given type T. */
+// TIPO AUXILIAR PARA ADICIONAR O ID NO RESULTADO
 type WithId<T> = T & { id: string };
 
-/**
- * Interface for the return value of the useDoc hook.
- * @template T Type of the document data.
- */
+// TIPOS DE RETORNO DO HOOK
 export interface UseDocResult<T> {
-  data: WithId<T> | null; // Document data with ID, or null.
-  isLoading: boolean; // True if loading.
-  error: FirestoreError | Error | null; // Error object, or null.
+  data: WithId<T> | null;
+  isLoading: boolean;
+  error: FirestoreError | Error | null;
 }
 
-/**
- * React hook to subscribe to a single Firestore document in real-time.
- * Handles nullable references.
- *
- * @template T Optional type for document data. Defaults to any.
- * @param {DocumentReference<DocumentData> | null | undefined} docRef -
- * The Firestore DocumentReference. Waits if null/undefined.
- * @returns {UseDocResult<T>} Object with data, isLoading, error.
- */
+// HOOK PARA ESCUTAR UM DOCUMENTO DO FIRESTORE EM TEMPO REAL
 export function useDoc<T = any>(
   docRef: DocumentReference<DocumentData> | null | undefined
 ): UseDocResult<T> {
@@ -57,10 +46,10 @@ export function useDoc<T = any>(
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
-          // Document does not exist
+          // DOCUMENTO NÃO EXISTE
           setData(null);
         }
-        setError(null); // Clear any previous error on successful snapshot
+        setError(null); // LIMPA ERRO ANTERIOR
         setIsLoading(false);
       },
       (error: FirestoreError) => {
@@ -73,7 +62,7 @@ export function useDoc<T = any>(
         setData(null);
         setIsLoading(false);
 
-        // Trigger global error propagation
+        // DISPARA O ERRO GLOBAL
         errorEmitter.emit("permission-error", contextualError);
       }
     );

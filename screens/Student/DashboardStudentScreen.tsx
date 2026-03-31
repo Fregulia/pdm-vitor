@@ -1,21 +1,30 @@
+// COMPONENTES
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademyById } from "@/services/academy";
 import { db } from "@/services/firebase";
 import { getStudentContext } from "@/services/students";
 import { getWorkoutAssignmentsByStudent } from "@/services/workoutAssignments";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 

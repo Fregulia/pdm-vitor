@@ -1,11 +1,22 @@
+// COMPONENTES
 import { ThemedButton } from "@/components/ThemedButton";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { auth } from "@/services/firebase";
+
+// ROTAS
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+
+// REACT
+import { useState } from "react";
 import { Alert, Text, View } from "react-native";
 
 export default function ConfirmEmailScreen() {

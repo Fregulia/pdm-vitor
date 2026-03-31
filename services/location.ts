@@ -1,4 +1,5 @@
 
+// CONVERTE UM ENDEREÇO EM COORDENADAS GEOGRÁFICAS
 export async function getCoordinatesFromAddress(address: string): Promise<{ latitude: number; longitude: number } | null> {
     try {
         const encodedAddress = encodeURIComponent(address);

@@ -1,13 +1,22 @@
+// COMPONENTES
 import { MenuButton } from "@/components/MenuButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademy } from "@/services/academy";
 import { getExercises, populateDefaultExercises } from "@/services/exercises";
 import { db } from "@/services/firebase";
 import { getUsersPhotoUrls } from "@/services/users";
+
+// BIBLIOTECAS EXTERNAS
 import { FontAwesome } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import {

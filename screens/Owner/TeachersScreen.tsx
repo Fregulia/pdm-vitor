@@ -1,12 +1,21 @@
+// COMPONENTES
 import { MenuButton } from "@/components/MenuButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademy } from "@/services/academy";
 import { db } from "@/services/firebase";
 import { cleanupExpiredInvites, createInvite } from "@/services/invites";
+
+// BIBLIOTECAS EXTERNAS
 import { FontAwesome } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import {

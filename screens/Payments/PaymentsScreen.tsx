@@ -1,21 +1,28 @@
+// CONSTANTES
+import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
+import { useAuth } from "@/context/AuthContext";
+
+// SERVIÇOS
+import {
+    subscribeToPayments,
+    updatePaymentStatus,
+    type Payment,
+    type PaymentStatus,
+} from "@/services/payments";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { Colors } from "../../constants/theme";
-import { useAuth } from "../../context/AuthContext";
-import {
-  subscribeToPayments,
-  updatePaymentStatus,
-  type Payment,
-  type PaymentStatus,
-} from "../../services/payments";
 
 // Compatibilidade com theme
 const theme = {

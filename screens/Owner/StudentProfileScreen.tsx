@@ -1,11 +1,20 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { Class, addStudentsToClass } from "@/services/classes";
 import { db } from "@/services/firebase";
 import { Student } from "@/services/students";
 import { Trainer } from "@/services/trainers";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import {

@@ -8,6 +8,7 @@ import React from "react";
 export default function OwnerDrawerLayout() {
   const colorScheme = useColorScheme() ?? "light";
 
+  // Cria o menu drawer do owner
   return (
     <Drawer
       drawerContent={(props) => <CustomDrawer {...props} />}

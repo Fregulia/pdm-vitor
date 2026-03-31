@@ -1,9 +1,18 @@
+// COMPONENTES
 import { ThemedButton } from "@/components/ThemedButton";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademy } from "@/services/academy";
 import { populateDefaultExercises } from "@/services/exercises";
+
+// BIBLIOTECAS EXTERNAS
 import React, { useState } from "react";
 import {
   ActivityIndicator,

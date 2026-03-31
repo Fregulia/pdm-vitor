@@ -1,6 +1,7 @@
 import { db } from "@/services/firebase";
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
+// BUSCA A FOTO DE PERFIL DE UM USUÁRIO PELO UID - MONTAGEM DE CHAT
 export async function getUserPhotoUrl(uid: string): Promise<string | null> {
   try {
     const userDoc = await getDoc(doc(db, "users", uid));
@@ -10,6 +11,7 @@ export async function getUserPhotoUrl(uid: string): Promise<string | null> {
   }
 }
 
+// BUSCA AS FOTOS DE PERFIL DE VÁRIOS USUÁRIOS DE UMA SÓ VEZ - CHAT
 export async function getUsersPhotoUrls(
   uids: string[]
 ): Promise<Record<string, string | null>> {

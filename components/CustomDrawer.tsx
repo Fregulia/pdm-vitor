@@ -13,6 +13,7 @@ import React, { useCallback, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// DRAWER PERSONALIZADO DO OWNER
 export function CustomDrawer(props: DrawerContentComponentProps) {
   const colorScheme = useColorScheme() ?? "light";
   const { user, signOut, getProfile } = useAuth();
@@ -20,6 +21,7 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<any>(null);
 
+  // CARREGA OS DADOS DO PERFIL QUANDO ABRE O DRAWER
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -52,9 +54,9 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
     ]);
   };
 
+  // VAI PARA O PERFIL E FECHA O DRAWER
   const handleProfilePress = () => {
     router.push("/(owner)/(drawer)/profile");
-    // Fecha o drawer após navegar
     props.navigation.closeDrawer();
   };
 
@@ -64,7 +66,7 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
       contentContainerStyle={styles.container}
       style={{ backgroundColor: Colors[colorScheme].background }}
     >
-      {/* Header com informações do usuário */}
+      {/* HEADER COM INFORMAÇÕES DO USUÁRIO */}
       <TouchableOpacity
         style={[
           styles.header,
@@ -85,12 +87,12 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
         <Text style={styles.userEmail}>{user?.email || ""}</Text>
       </TouchableOpacity>
 
-      {/* Menu Items */}
+      {/* ITENS DO MENU */}
       <View style={styles.menuContainer}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* Footer com botão de logout */}
+      {/* RODAPÉ COM BOTÃO DE SAIR */}
       <View
         style={[
           styles.footer,

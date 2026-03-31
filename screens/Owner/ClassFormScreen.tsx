@@ -1,10 +1,17 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
 import { TimeInput } from "@/components/TimeInput";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { getAcademyById } from "@/services/academy";
 import {
   ClassInput,
@@ -15,6 +22,8 @@ import {
 } from "@/services/classes";
 import { db } from "@/services/firebase";
 import { getTrainers } from "@/services/trainers";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";

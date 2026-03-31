@@ -1,27 +1,36 @@
+// COMPONENTES
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { AcademyInfo, getAcademyById } from "@/services/academy";
 import { Class, getClasses } from "@/services/classes";
 import { db } from "@/services/firebase";
 import { getTrainerContext } from "@/services/trainers";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  collection,
-  getCountFromServer,
-  getDocs,
-  limit,
-  query,
+    collection,
+    getCountFromServer,
+    getDocs,
+    limit,
+    query,
 } from "firebase/firestore";
 import React from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -39,7 +48,7 @@ function getDayLabel(day: string): string {
   return days[day] || day;
 }
 
-// Helper para obter o número do dia da semana (0 = domingo, 1 = segunda, etc)
+// Helper para obter o número do dia da semana por num
 function getDayNumber(day: string): number {
   const days: Record<string, number> = {
     sunday: 0,
@@ -58,7 +67,7 @@ function getNextClass(classes: Class[]): Class | null {
   if (classes.length === 0) return null;
 
   const now = new Date();
-  const currentDay = now.getDay(); // 0 = domingo, 1 = segunda, etc
+  const currentDay = now.getDay(); // pega o num do dia
   const currentTime = now.getHours() * 60 + now.getMinutes(); // tempo em minutos
 
   // Converte classes para array com informações de proximidade
@@ -138,17 +147,9 @@ export default function DashboardTrainerScreen() {
           return;
         }
         setGymId(ctx.gymId);
-        console.log(
-          "[DashboardTrainer] Carregando dados para gymId:",
-          ctx.gymId
-        );
 
         try {
           const academyInfo = await getAcademyById(ctx.gymId);
-          console.log(
-            "[DashboardTrainer] Academia carregada:",
-            academyInfo?.name
-          );
           setAcademy(academyInfo);
         } catch (err) {
           console.error("[DashboardTrainer] Erro ao carregar academia:", err);
@@ -157,10 +158,6 @@ export default function DashboardTrainerScreen() {
         try {
           const sCountSnap = await getCountFromServer(
             collection(db, "academies", ctx.gymId, "students")
-          );
-          console.log(
-            "[DashboardTrainer] Contagem de alunos:",
-            sCountSnap.data().count
           );
           setCounts((prev) => ({ ...prev, students: sCountSnap.data().count }));
         } catch (err) {
@@ -171,10 +168,6 @@ export default function DashboardTrainerScreen() {
           const cCountSnap = await getCountFromServer(
             collection(db, "academies", ctx.gymId, "classes")
           );
-          console.log(
-            "[DashboardTrainer] Contagem de turmas:",
-            cCountSnap.data().count
-          );
           setCounts((prev) => ({ ...prev, classes: cCountSnap.data().count }));
         } catch (err) {
           console.error("[DashboardTrainer] Erro ao contar turmas:", err);
@@ -183,10 +176,6 @@ export default function DashboardTrainerScreen() {
         try {
           const sDocs = await getDocs(
             query(collection(db, "academies", ctx.gymId, "students"), limit(5))
-          );
-          console.log(
-            "[DashboardTrainer] Documentos de alunos:",
-            sDocs.docs.length
           );
           setStudentNames(
             sDocs.docs.map((d) => (d.data() as any).name || d.id)
@@ -200,10 +189,6 @@ export default function DashboardTrainerScreen() {
           const allClasses = await getClasses(ctx.gymId);
           const trainerClasses = allClasses.filter(
             (c) => c.trainerId === user?.uid
-          );
-          console.log(
-            "[DashboardTrainer] Turmas do professor:",
-            trainerClasses.length
           );
           setMyClasses(trainerClasses);
 
@@ -250,7 +235,7 @@ export default function DashboardTrainerScreen() {
             marginBottom: 4,
           }}
         >
-          {greeting}, {firstName}! 👋
+          {greeting}, {firstName}!
         </Text>
         <Text
           style={{

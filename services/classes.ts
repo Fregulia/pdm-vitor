@@ -12,7 +12,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-// TIPOS
+// TIPOS DA TURMA - OWNER
 export interface Class {
   id: string;
   gymId: string;
@@ -28,6 +28,7 @@ export interface Class {
   updatedAt?: any;
 }
 
+// TIPOS DA TURMA - TRAINER
 export interface ClassInput {
   trainerId: string | null;
   title: string;
@@ -38,16 +39,16 @@ export interface ClassInput {
   students?: string[];
 }
 
-/**
- * Cria uma nova turma
- */
+// CRIA TURMA NOVA - FORM DE CRIAÇÃO 
 export async function createClass(
   gymId: string,
+  // PEGA DADOS DO FORMULÁRIO
   classData: ClassInput
 ): Promise<string> {
   if (!auth.currentUser) throw new Error("NOT_AUTHENTICATED");
 
   const classRef = collection(db, "academies", gymId, "classes");
+  // DOCUMENTA A TURMA COM OS DADOS DO FORM + DADOS DO OWNER LOGADO
   const newClass = {
     gymId,
     ownerId: auth.currentUser.uid,
@@ -66,16 +67,14 @@ export async function createClass(
   return docRef.id;
 }
 
-/**
- * Atualiza uma turma existente
- */
+// ATUALIZA TURMA - PÁGINA DA TURMA
 export async function updateClass(
   gymId: string,
   classId: string,
   updates: Partial<ClassInput>
 ): Promise<void> {
   if (!auth.currentUser) throw new Error("NOT_AUTHENTICATED");
-
+  // BUSCA O DOC DA TURMA E ATUALIZA COM OS DADOS DO FORM
   const classRef = doc(db, "academies", gymId, "classes", classId);
   await updateDoc(classRef, {
     ...updates,
@@ -83,9 +82,7 @@ export async function updateClass(
   });
 }
 
-/**
- * Deleta uma turma
- */
+// APAGA TURMA - PÁGINA DA TURMA
 export async function deleteClass(
   gymId: string,
   classId: string
@@ -96,10 +93,9 @@ export async function deleteClass(
   await deleteDoc(classRef);
 }
 
-/**
- * Busca todas as turmas de uma academia
- */
+// BUSCA TODAS AS TURMAS - PÁGINA DE TURMAS/MATRICULAS
 export async function getClasses(gymId: string): Promise<Class[]> {
+  // BUSCA A SUBCOL DE TURMAS PELO ID DE ACADEMIA
   const classesRef = collection(db, "academies", gymId, "classes");
   const q = query(classesRef, orderBy("title", "asc"));
   const snapshot = await getDocs(q);
@@ -110,9 +106,7 @@ export async function getClasses(gymId: string): Promise<Class[]> {
   })) as Class[];
 }
 
-/**
- * Busca uma turma específica
- */
+// BUSCA TURMA PELO ID - PÁGINA DE DETALHES
 export async function getClassById(
   gymId: string,
   classId: string
@@ -128,9 +122,7 @@ export async function getClassById(
   } as Class;
 }
 
-/**
- * Adiciona alunos a uma turma
- */
+// ADICIONA ALUNO EM UMA TURMA - PÁGINA DO ALUNO
 export async function addStudentsToClass(
   gymId: string,
   classId: string,
@@ -152,9 +144,7 @@ export async function addStudentsToClass(
   });
 }
 
-/**
- * Remove alunos de uma turma
- */
+// REMOVE ALUNOS DA TURMA - PÁGINA DE DETALHES DA TURMA
 export async function removeStudentsFromClass(
   gymId: string,
   classId: string,
@@ -168,6 +158,7 @@ export async function removeStudentsFromClass(
   if (!classSnap.exists()) throw new Error("CLASS_NOT_FOUND");
 
   const currentStudents = (classSnap.data().students || []) as string[];
+  // SÓ FICA OS IDS QUE NÃO SÃO REMOVIDOS
   const updatedStudents = currentStudents.filter(
     (id) => !studentIds.includes(id)
   );
@@ -178,9 +169,7 @@ export async function removeStudentsFromClass(
   });
 }
 
-/**
- * Valida se o horário está dentro do funcionamento da academia
- */
+// VALIDA HORÁRIO DA TURMA - CRIAÇÃO/ATUALIZAÇÃO DA TURMA
 export function validateClassTime(
   startTime: string,
   endTime: string,
@@ -199,12 +188,12 @@ export function validateClassTime(
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = timeToMinutes(endTime);
 
-  // Verifica se horário de início é antes do fim
+  // VERIFICA SE HORÁRIO DE INÍCIO < HORÁRIO DE FIM
   if (startMinutes >= endMinutes) {
     return { valid: false, error: "Horário de início deve ser antes do fim" };
   }
 
-  // Valida contra horário da semana (mais restritivo)
+  // VALIDA COM HORÁRIOS DA ACADEMIA
   const weekdayOpenMinutes = timeToMinutes(academyHours.weekdays.open);
   const weekdayCloseMinutes = timeToMinutes(academyHours.weekdays.close);
 

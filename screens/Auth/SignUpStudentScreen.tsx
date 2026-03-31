@@ -1,18 +1,33 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { ThemedButton } from "@/components/ThemedButton";
 import { ThemedInput } from "@/components/ThemedInput";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { auth } from "@/services/firebase";
 import { joinAsStudentWithInvite } from "@/services/students";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+
+// FIREBASE
 import {
   createUserWithEmailAndPassword,
   // sendEmailVerification, // TEMPORARIAMENTE DESABILITADO
   updateProfile,
 } from "firebase/auth";
+
+// REACT
 import React, { useRef, useState } from "react";
+
+// REACT NATIVE
 import {
   Alert,
   Keyboard,

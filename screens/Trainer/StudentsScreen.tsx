@@ -1,8 +1,17 @@
+// COMPONENTES
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { db } from "@/services/firebase";
 import { getTrainerContext } from "@/services/trainers";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import React from "react";

@@ -1,18 +1,19 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-  updateDoc,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    onSnapshot,
+    orderBy,
+    query,
+    Timestamp,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+// TIPOS DE MENSAGEM
 export interface Message {
   id: string;
   conversationId: string;
@@ -23,17 +24,16 @@ export interface Message {
   read: boolean;
 }
 
+// TIPOS DE CONVERSA
 export interface Conversation {
   id: string;
-  participants: string[]; // Array of user IDs
+  participants: string[];
   lastMessage: string;
   lastMessageTime: Timestamp;
   unreadCount: { [userId: string]: number };
 }
 
-/**
- * Send a message in a conversation
- */
+// ENVIAR MENSAGEM - PÁGINA DE CHAT
 export async function sendMessage(
   conversationId: string,
   senderId: string,
@@ -41,6 +41,7 @@ export async function sendMessage(
   text: string
 ): Promise<string> {
   try {
+    // CRIA O DOCUMENTO DA MENSAGEM
     const messagesRef = collection(
       db,
       "conversations",
@@ -57,7 +58,7 @@ export async function sendMessage(
 
     const docRef = await addDoc(messagesRef, messageData);
 
-    // Update conversation's last message
+    // ATUALIZA A ULTIMA MENSAGEM DO DOC DA CONVERSA
     const conversationRef = doc(db, "conversations", conversationId);
     await updateDoc(conversationRef, {
       lastMessage: text,
@@ -74,14 +75,13 @@ export async function sendMessage(
   }
 }
 
-/**
- * Get or create a conversation between two users
- */
+// BUSCA OU CRIA UMA CONVERSA ENTRE DOIS USUÁRIOS - AO ENTRAR NO CHAT
 export async function getOrCreateConversation(
   userId1: string,
   userId2: string
 ): Promise<string> {
   try {
+    // BUSCA CONVERSA 
     const conversationsRef = collection(db, "conversations");
     const q = query(
       conversationsRef,
@@ -90,7 +90,7 @@ export async function getOrCreateConversation(
 
     const snapshot = await getDocs(q);
 
-    // Check if conversation exists
+    // VERIFICA SE ESSA CONVERSA EXISTE
     for (const doc of snapshot.docs) {
       const data = doc.data();
       if (data.participants.includes(userId2)) {
@@ -98,7 +98,7 @@ export async function getOrCreateConversation(
       }
     }
 
-    // Create new conversation
+    // CRIA CONVERSA NOVA
     const newConversation = {
       participants: [userId1, userId2],
       lastMessage: "",
@@ -117,9 +117,7 @@ export async function getOrCreateConversation(
   }
 }
 
-/**
- * Subscribe to messages in a conversation
- */
+// ATUALIZA EM TEMPO REAL AS MENSAGENS -PÁGINA DE CHAT 
 export function subscribeToMessages(
   conversationId: string,
   callback: (messages: Message[]) => void
@@ -132,6 +130,7 @@ export function subscribeToMessages(
   );
   const q = query(messagesRef, orderBy("timestamp", "asc"));
 
+  // LISTENER - A CADA MUDANÇA NO DOC DE MENSAGENS ATUALIZA O CHAT
   return onSnapshot(q, (snapshot) => {
     const messages: Message[] = [];
     snapshot.forEach((doc) => {
@@ -145,9 +144,7 @@ export function subscribeToMessages(
   });
 }
 
-/**
- * Subscribe to user's conversations
- */
+// ATUALIZA AS CONVERSAS DO USUÁRIO EM TEMPO REAL - LISTA DE CONVERSAS
 export function subscribeToConversations(
   userId: string,
   callback: (conversations: Conversation[]) => void
@@ -158,7 +155,7 @@ export function subscribeToConversations(
     where("participants", "array-contains", userId),
     orderBy("lastMessageTime", "desc")
   );
-
+  // LISTENER - A CADA MUDANÇA NO DOC DE CONVERSAS ATUALIZA A LISTA DE CONVERSAS
   return onSnapshot(q, (snapshot) => {
     const conversations: Conversation[] = [];
     snapshot.forEach((doc) => {
@@ -171,13 +168,13 @@ export function subscribeToConversations(
   });
 }
 
-/**
- * Mark messages as read
- */
+// MARCA AS MENSAGENS COMO LIDAS
 export async function markMessagesAsRead(
   conversationId: string,
   userId: string
 ): Promise<void> {
+
+// AO ENTRAR NA CONVERSA UNREADCOUNT = 0
   try {
     const conversationRef = doc(db, "conversations", conversationId);
     await updateDoc(conversationRef, {
@@ -189,9 +186,7 @@ export async function markMessagesAsRead(
   }
 }
 
-/**
- * Get user info for a conversation participant
- */
+// BUSCA AS INFORMAÇÕES DE UM USUÁRIO DO CHAT - MONTAGEM DE CHAT
 export async function getUserInfo(userId: string): Promise<any> {
   try {
     const userRef = doc(db, "users", userId);

@@ -1,9 +1,16 @@
+// COMPONENTES
 import { MenuButton } from "@/components/MenuButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -188,7 +195,7 @@ export default function ProfileViewScreen() {
               styles.actionButton,
               { backgroundColor: Colors[colorScheme].card },
             ]}
-            onPress={() => router.push("/(tabs)/proposta")}
+            onPress={() => router.push("/proposta")}
           >
             <Ionicons
               name="information-circle-outline"

@@ -1,39 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regras para perfil de usuários (cada usuário pode gerenciar seu próprio doc)
+    // USUÁRIO - SÓ PODE ALTERAR DADOS PRÓPRIOS
     match /users/{uid} {
       allow read, write, update, delete: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Regras para documentos da academia (ID do doc = gymId; proprietário identificado por campo ownerUid)
+    // FUNÇÃO VALIDA OWNER DA ACADEMIA
     function isOwner(gymId) {
       return request.auth != null &&
         get(/databases/$(database)/documents/academies/$(gymId)).data.ownerUid == request.auth.uid;
     }
 
+    // ACADEMIA
     match /academies/{gymId} {
-      // Qualquer usuário autenticado pode ler documentos individuais
-      allow get: if request.auth != null;
-      // Qualquer usuário autenticado pode listar/fazer queries (necessário para buscar academia por ownerUid)
-      allow list: if request.auth != null;
-      // Criar: qualquer usuário autenticado pode criar academia (ownerUid opcionalmente conferido)
-      allow create: if request.auth != null && (
+      // GET, LIST - QUALQUER
+      allow get, list : if request.auth != null;
+
+      // REVER: CREATE E UPDATE- AUTENTICADO E SE FOR OWNER OU NÃO TIVER OWNER
+      allow create, update: if request.auth != null && (
         !('ownerUid' in request.resource.data) ||
         request.resource.data.ownerUid == request.auth.uid
       );
-      // Atualizar: qualquer usuário autenticado pode atualizar; se ownerUid presente, deve bater
-      allow update: if request.auth != null && (
-        !('ownerUid' in request.resource.data) || request.resource.data.ownerUid == request.auth.uid ||
-        ('ownerUid' in resource.data && resource.data.ownerUid == request.auth.uid)
-      );
-      // Exclusão: restrita ao owner conhecido
+
+      // DELETER - APENAS OWNER
       allow delete: if isOwner(gymId);
 
-      // Subcoleção TEACHERS: o próprio trainer pode editar/deletar seu doc; o owner também pode deletar
+      // SUBCOLEÇÃO DE TRAINERS
       match /teachers/{tid} {
+        // READ - QUALQUER
         allow read: if request.auth != null;
-        // criação: permitida ao owner (via isOwner) OU ao próprio trainer (criando seu doc coerente com o path)
+
+        // CREATE, UPDATE E DELETE - OWNER OU PRÓPRIO TRAINER
         allow create: if request.auth != null && (
           isOwner(gymId) ||
           (
@@ -42,16 +40,15 @@ service cloud.firestore {
             request.resource.data.gym_id == gymId
           )
         );
-        // atualização: só o próprio trainer pode editar
         allow update: if request.auth != null && request.auth.uid == tid;
-        // exclusão: owner ou o próprio trainer
         allow delete: if request.auth != null && (isOwner(gymId) || request.auth.uid == tid);
       }
 
-      // Subcoleção STUDENTS: similar a teachers, mas com student role
+      // SUBCOLEÇÃO DE STUDENTS
       match /students/{sid} {
+        // READ - QUALQUER AUTENTICADO
         allow read: if request.auth != null;
-        // criação: permitida ao owner OU ao próprio aluno (criando seu doc coerente com o path)
+        // CREATE, UPDATE E DELETE - OWNER OU PRÓPRIO ALUNO
         allow create: if request.auth != null && (
           isOwner(gymId) ||
           (
@@ -62,100 +59,91 @@ service cloud.firestore {
             request.resource.data.trainer_id is string
           )
         );
-        // atualização: só o próprio aluno ou owner pode editar
         allow update: if request.auth != null && (request.auth.uid == sid || isOwner(gymId));
-        // exclusão: owner ou o próprio aluno
         allow delete: if request.auth != null && (isOwner(gymId) || request.auth.uid == sid);
       }
 
-      // Subcoleção EXERCISES: owner pode criar/editar/deletar; trainers podem criar (custom exercises) e ler
+      // SUBCOLEÇÃO DE EXERCISES
       match /exercises/{exerciseId} {
-        allow read: if request.auth != null;
-        // criação: liberar para qualquer usuário autenticado (evita bloqueio ao popular exercícios padrão)
-        allow create: if request.auth != null;
-        // atualização/exclusão: permitir a autenticados (mantendo fluxo simples)
-        allow update, delete: if request.auth != null;
+        // TODOS - QUALQUER AUTENTICADO
+        allow read, create, update, delete: if request.auth != null;
       }
 
-      // Subcoleção WORKOUTS: trainers podem criar/editar/deletar seus próprios treinos; owner pode ler todos
+      // SUBCOLEÇÃO DE WORKOUTS
       match /workouts/{workoutId} {
+        // READ - QUALQUER AUTENTICADO
         allow read: if request.auth != null;
-        // criação: apenas trainers da academia (validando que trainerId == auth.uid)
+        // CREATE - OWNER OU TRAINER
         allow create: if request.auth != null &&
           exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid)) &&
           request.resource.data.trainerId == request.auth.uid;
-        // atualização/exclusão: apenas o trainer que criou ou o owner
+        // UPDATE, DELETE - APENAS TRAINER DONO DO TREINO
         allow update, delete: if request.auth != null && (
-          resource.data.trainerId == request.auth.uid ||
-          isOwner(gymId)
-        );
+          resource.data.trainerId == request.auth.uid);
       }
 
-      // Subcoleção WORKOUT_ASSIGNMENTS: atribuições de treinos para alunos em turmas
+      // SUBCOLEÇÃO DE WORKOUT ASSIGNMENTS
       match /workout_assignments/{assignmentId} {
-        // leitura: owner, trainers e o próprio aluno podem ler
+        // LIBERA LEITURA AO OWNER, TRAINER E ALUNO
         allow read: if request.auth != null && (
           isOwner(gymId) ||
           exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid)) ||
           resource.data.studentId == request.auth.uid
         );
-        // criação/atualização/exclusão: apenas trainers ou owner
+        // LIBERA ESCRITA AO OWNER OU TRAINER
         allow create, update, delete: if request.auth != null && (
-          isOwner(gymId) ||
           exists(/databases/$(database)/documents/academies/$(gymId)/teachers/$(request.auth.uid))
         );
       }
 
-      // Outras subcoleções continuam restritas ao owner
+      // FALLBACK DAS SUBCOLEÇÕES -  SÓ OWNER
       match /{document=**} {
-        allow read: if request.auth != null;
-        // Liberar escrita/atualização/exclusão para autenticados como fallback geral
-        allow write, update, delete: if request.auth != null;
+        allow read, write, update, delete: if isOwner(gymId);
       }
     }
 
-    // Convites (top-level): owner cria; qualquer usuário autenticado pode ler para validar; uso único
+// CORRIGIR DAQUI PRA BAIXO, TA FORA DO ESCOPO DA ACADEMIA
+
+    // CONVITES DE TRAINER
     match /invites/{code} {
       allow read: if request.auth != null;
-      // criação: apenas usuários autenticados; associa o dono ao auth.uid
+      // LIBERA CRIAÇÃO AO OWNER LOGADO
       allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
-      // marca como usado: permitido se usedBy estava vazio, será igual ao auth.uid e o convite não expirou
+      // LIBERA USO ÚNICO DO CONVITE
       allow update: if request.auth != null &&
         (resource.data.usedBy == null || resource.data.usedBy == '') &&
         request.resource.data.usedBy == request.auth.uid &&
         (resource.data.expiresAt == null || request.time < resource.data.expiresAt);
-      // exclusão: owner do convite ou quem usou
+      // LIBERA EXCLUSÃO AO OWNER OU USUÁRIO
       allow delete: if request.auth != null &&
         (resource.data.ownerUid == request.auth.uid || resource.data.usedBy == request.auth.uid);
     }
 
-    // Convites de alunos (top-level): owner cria; qualquer usuário autenticado pode ler
+    // CONVITES DE ALUNO
     match /studentInvites/{code} {
       allow read: if request.auth != null;
-      // criação: apenas owner
+      // LIBERA CRIAÇÃO APENAS AO OWNER
       allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
-      // marca como usado: permitido se usedBy não existe ou está vazio, e será igual ao auth.uid
-      // Validação de expiração é feita no código, não na regra, para evitar problemas de timestamp
+      // LIBERA MARCAÇÃO DE USO DO CONVITE
       allow update: if request.auth != null &&
         (!('usedBy' in resource.data) || resource.data.usedBy == null || resource.data.usedBy == '') &&
         request.resource.data.usedBy == request.auth.uid;
-      // exclusão: owner do convite ou quem usou
+      // LIBERA EXCLUSÃO AO OWNER OU USUÁRIO
       allow delete: if request.auth != null &&
         (resource.data.ownerUid == request.auth.uid || resource.data.usedBy == request.auth.uid);
     }
 
-    // Regra global para exercises em qualquer nível (fallback): permitir autenticados
+    // FALLBACK GLOBAL PARA EXERCISES
     match /{path=**}/exercises/{eid} {
       allow read, write, update, delete: if request.auth != null;
     }
     
-    // REGRA GLOBAL para collectionGroup - permite que trainers busquem seu próprio documento
-    // Esta regra DEVE estar no nível raiz, fora de outros blocos match
+    // FALLBACK GLOBAL PARA TRAINERS
     match /{path=**}/teachers/{tid} {
       allow read: if request.auth != null && request.auth.uid == tid;
     }
     
-    // Fallback global: qualquer usuário autenticado pode ler/escrever qualquer documento
+    // FALLBACK GLOBAL FINAL
     match /{document=**} {
       allow read, write: if request.auth != null;
     }

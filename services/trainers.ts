@@ -13,8 +13,8 @@ import {
   where,
 } from "firebase/firestore";
 import { consumeInvite } from "./invites";
-// reuse existing firestore import; helpers below use the same setDoc/doc
 
+// TIPOS DE TRAINER
 export type Trainer = {
   owner_id: string;
   gym_id: string;
@@ -26,6 +26,7 @@ export type Trainer = {
   updatedAt?: any;
 };
 
+// INSERE O TRAINER NA ACADEMIA BASEADO NO CÓDIGO DE CONVITE - SIGNUP
 export async function joinAsTrainerWithInvite(params: {
   inviteCode: string;
   name: string;
@@ -34,10 +35,12 @@ export async function joinAsTrainerWithInvite(params: {
 }) {
   const user = auth.currentUser;
   if (!user) throw new Error("NOT_AUTHENTICATED");
+  // CHAMA O SERVICE DE USAR CONVITE
   const { ownerUid, gymId } = await consumeInvite(
     params.inviteCode.trim(),
     user.uid
   );
+  // MONTA E SALVA O DOCUMENTO DO TRAINER EM TEACHERS
   const trainer: Trainer = {
     owner_id: ownerUid,
     gym_id: gymId,
@@ -48,11 +51,10 @@ export async function joinAsTrainerWithInvite(params: {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   } as any;
-  // salva sob academies/{gymId}/teachers/{trainerUid}
+
+  // SALVA EM /USERS E /TEACHERS PRA FACILITAR CONSULTAS FUTURAS
   const ref = doc(db, "academies", gymId, "teachers", user.uid);
   await setDoc(ref, trainer, { merge: true });
-
-  // também grava os atributos no perfil do usuário (/users/{uid})
   const uref = doc(db, "users", user.uid);
   await setDoc(
     uref,
@@ -66,7 +68,7 @@ export async function joinAsTrainerWithInvite(params: {
   );
 }
 
-// Recupera o vínculo do trainer (owner_id e gym_id) procurando em todas academias
+// BUSCA O CONTEXTO DO TRAINER (OWNER E ACADEMIA) - DASHBOARD
 export async function getTrainerContext(trainerUid?: string): Promise<{
   ownerUid: string;
   gymId: string;
@@ -74,7 +76,7 @@ export async function getTrainerContext(trainerUid?: string): Promise<{
   const uid = trainerUid || auth.currentUser?.uid;
   if (!uid) return null;
 
-  // Método 1: Tenta via perfil /users (mais rápido e confiável)
+  // 1 - TENTA EM /USERS
   try {
     const uref = doc(db, "users", uid);
     const usnap = await getDoc(uref);
@@ -85,10 +87,9 @@ export async function getTrainerContext(trainerUid?: string): Promise<{
       }
     }
   } catch {
-    // Silently fail and try next method
   }
 
-  // Método 2: usa invites usados por este uid para descobrir o contexto
+  // 2 - VAI EM /TEACHERS
   try {
     const invitesRef = collection(db, "invites");
     const iq = query(
@@ -103,7 +104,7 @@ export async function getTrainerContext(trainerUid?: string): Promise<{
       const ownerUid = inv.ownerUid;
       const gymId = inv.gymId;
       if (ownerUid && gymId) {
-        // Backfill no perfil para próxima vez
+        // USA O METODO 2 PRA CORRIGIR O /USERS PRA FUNCIONAR DEPOIS
         try {
           await setDoc(
             doc(db, "users", uid),
@@ -111,37 +112,17 @@ export async function getTrainerContext(trainerUid?: string): Promise<{
             { merge: true }
           );
         } catch {
-          // Silently fail backfill
         }
         return { ownerUid, gymId };
       }
     }
   } catch {
-    // Silently fail and try next method
-  }
-
-  // Método 3: collectionGroup como último recurso (pode ter problemas de permissão)
-  try {
-    const cg = collectionGroup(db, "teachers");
-    const q = query(cg, where("uid", "==", uid));
-    const snaps = await getDocs(q);
-    if (!snaps.empty) {
-      const docSnap = snaps.docs[0];
-      const data = docSnap.data() as any;
-      if (data?.owner_id && data?.gym_id) {
-        return { ownerUid: data.owner_id, gymId: data.gym_id };
-      }
-    }
-  } catch {
-    // CollectionGroup can fail due to permissions, that's expected
   }
 
   return null;
 }
 
-/**
- * Busca todos os professores de uma academia
- */
+// LISTA TRAINERS - OWNER
 export async function getTrainers(gymId: string): Promise<Trainer[]> {
   const trainersRef = collection(db, "academies", gymId, "teachers");
   const snapshot = await getDocs(trainersRef);

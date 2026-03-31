@@ -5,12 +5,14 @@ import React from "react";
 import { View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// TIPOS DE PROPS DO LAYOUT DE TELA
 interface ScreenLayoutProps {
   children: React.ReactNode;
   style?: ViewStyle;
   noPadding?: boolean;
 }
 
+// LAYOUT PADRÃO PARA AS TELAS
 export function ScreenLayout({
   children,
   style,

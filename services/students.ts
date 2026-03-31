@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { consumeStudentInvite } from "./studentInvites";
 
+// TIPOS DE DADOS DO ALUNO
 export type Student = {
   uid: string;
   name: string;
@@ -23,17 +24,23 @@ export type Student = {
   updatedAt?: any;
 };
 
-/**
- * Cadastra um aluno usando um convite
- * @param inviteCode - Código do convite
- */
+// TIPO DE DADOS DO CONTEXTO DO ALUNO
+export type StudentContext = {
+  ownerUid: string;
+  gymId: string;
+  trainerId: string;
+};
+
+// INSERE O ALUNO NA ACADEMIA BASEADO NO CÓDIGO DE CONVITE - SIGNUP
 export async function joinAsStudentWithInvite(inviteCode: string) {
   const user = auth.currentUser;
   if (!user) throw new Error("NOT_AUTHENTICATED");
 
+  // CHAMA O SERVICE DE USAR CONVITE
   const { ownerUid, gymId, trainerId, studentName } =
     await consumeStudentInvite(inviteCode.trim(), user.uid);
 
+  // CRIA O DOCUMENTO DO ALUNO E SALVA EM STUDENTS
   const student: Student = {
     uid: user.uid,
     name: studentName,
@@ -44,17 +51,15 @@ export async function joinAsStudentWithInvite(inviteCode: string) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   } as any;
-
-  // Salva sob academies/{gymId}/students/{studentUid}
   const ref = doc(db, "academies", gymId, "students", user.uid);
   await setDoc(ref, student, { merge: true });
 
-  // Atualiza o displayName do usuário no Firebase Auth
+  // ATUALIZA O PERFIL DO AUTH COM O NOME DO ALUNO
   await updateProfile(user, {
     displayName: studentName,
   });
 
-  // Também grava os atributos no perfil do usuário (/users/{uid})
+  // GRAVA OS DADOS EM /USERS PRA FACILITAR ACESSOS POSTERIORES
   const uref = doc(db, "users", user.uid);
   await setDoc(
     uref,
@@ -69,18 +74,12 @@ export async function joinAsStudentWithInvite(inviteCode: string) {
   );
 }
 
-/**
- * Recupera o contexto do aluno (owner_id, gym_id, trainer_id)
- */
-export async function getStudentContext(studentUid?: string): Promise<{
-  ownerUid: string;
-  gymId: string;
-  trainerId: string;
-} | null> {
+// BUSCA CONTEXTO DO ALUNO (ACADEMIA, PROFESSOR E DONO) - DASHBOARD
+export async function getStudentContext(studentUid?: string): Promise<StudentContext | null> {
   const uid = studentUid || auth.currentUser?.uid;
   if (!uid) return null;
 
-  // Método 1: Tenta via perfil /users (mais rápido e confiável)
+  // TRY 1 - BUSCA DIRETO EM /USERS
   try {
     const uref = doc(db, "users", uid);
     const usnap = await getDoc(uref);
@@ -98,7 +97,7 @@ export async function getStudentContext(studentUid?: string): Promise<{
     console.error("[getStudentContext] Erro ao buscar via users:", err);
   }
 
-  // Método 2: usa invites usados por este uid
+  // TRY 2 (CASO 1 FALHE) - BUSCA PELO CÓDIGO DE CONVITE USADO
   try {
     const invitesRef = collection(db, "studentInvites");
     const iq = query(invitesRef, where("usedBy", "==", uid));
@@ -109,7 +108,7 @@ export async function getStudentContext(studentUid?: string): Promise<{
       const gymId = inv.gymId;
       const trainerId = inv.trainerId;
       if (ownerUid && gymId && trainerId) {
-        // Backfill no perfil para próxima vez
+        // CORRIJE O /USERS PRA FUNCIONAR DEPOIS
         try {
           await setDoc(
             doc(db, "users", uid),
@@ -117,27 +116,22 @@ export async function getStudentContext(studentUid?: string): Promise<{
             { merge: true }
           );
         } catch {
-          // Silently fail backfill
         }
         return { ownerUid, gymId, trainerId };
       }
     }
   } catch {
-    // Silently fail
   }
-
   return null;
 }
 
-/**
- * Sincroniza dados do aluno que podem estar faltando
- * Atualiza nome, email e createdAt se estiverem vazios
- */
+// SINCRONIZA OS DOIS ENDPOINTS DO DB (/USERS E /STUDENTS)
 export async function syncStudentData(
   gymId: string,
   studentUid: string
 ): Promise<void> {
   try {
+    // BUSCA OS DADOS DO /STUDENTS
     const studentRef = doc(db, "academies", gymId, "students", studentUid);
     const studentSnap = await getDoc(studentRef);
 
@@ -148,7 +142,7 @@ export async function syncStudentData(
     const studentData = studentSnap.data();
     const updates: any = {};
 
-    // Busca dados do usuário no /users
+    // BUSCA OS DADOS DO /USERS
     const userRef = doc(db, "users", studentUid);
     const userSnap = await getDoc(userRef);
     let userData: any = null;
@@ -157,12 +151,12 @@ export async function syncStudentData(
       userData = userSnap.data();
     }
 
-    // Verifica se precisa atualizar o nome
+    // VERIFICA SE PRECISA ATUALIZAR O NOME
     if (!studentData.name || studentData.name === "") {
       if (userData?.displayName) {
         updates.name = userData.displayName;
       } else {
-        // Tenta pegar do Firebase Auth como fallback
+        // PEGA O NOME DO FIREBASE AUTH COMO FALLBACK
         const currentUser = auth.currentUser;
         if (
           currentUser &&
@@ -176,12 +170,12 @@ export async function syncStudentData(
       }
     }
 
-    // Verifica se precisa atualizar o email
+    // VERIFICA SE PRECISA ATUALIZAR O EMAIL
     if (!studentData.email || studentData.email === "") {
       if (userData?.email) {
         updates.email = userData.email;
       } else {
-        // Tenta pegar do Firebase Auth como fallback
+        // PEGA O EMAIL DO FIREBASE AUTH COMO FALLBACK
         const currentUser = auth.currentUser;
         if (
           currentUser &&
@@ -195,17 +189,16 @@ export async function syncStudentData(
       }
     }
 
-    // Verifica se precisa adicionar createdAt
+    // GARANTE QUE createdAt ESTEJA DEFINIDO
     if (!studentData.createdAt) {
       updates.createdAt = serverTimestamp();
     }
 
-    // Atualiza apenas se houver mudanças
+    // GARANTE QUE updatedAt ESTEJA DEFINIDO
     if (Object.keys(updates).length > 0) {
       updates.updatedAt = serverTimestamp();
       await setDoc(studentRef, updates, { merge: true });
     }
   } catch {
-    // Silently fail
   }
 }

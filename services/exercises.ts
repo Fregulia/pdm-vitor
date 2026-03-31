@@ -8,6 +8,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 
+// CATEGORIA DE EXERCÍCIOS
 export type ExerciseCategory =
   | "peito"
   | "costas"
@@ -19,6 +20,7 @@ export type ExerciseCategory =
   | "posterior"
   | "gluteos";
 
+// INTERFACE DO EXERCÍCIO
 export interface Exercise {
   id: string;
   gymId: string;
@@ -29,9 +31,7 @@ export interface Exercise {
   updatedAt?: any;
 }
 
-/**
- * Busca todos os exercícios de uma academia
- */
+// BUSCA TODOS EXERCÍCIOS DA ACADEMIA - PÁGINA DE EXERCÍCIOS
 export async function getExercises(gymId: string): Promise<Exercise[]> {
   const exercisesRef = collection(db, "academies", gymId, "exercises");
   const snapshot = await getDocs(exercisesRef);
@@ -42,9 +42,7 @@ export async function getExercises(gymId: string): Promise<Exercise[]> {
   })) as Exercise[];
 }
 
-/**
- * Cria um novo exercício personalizado
- */
+// CRIAÇÃO DE EXERCÍCIO - FORM CRIA EXERCÍCIOS
 export async function createExercise(
   gymId: string,
   exerciseData: {
@@ -67,9 +65,7 @@ export async function createExercise(
   return docRef.id;
 }
 
-/**
- * Popula a tabela de exercícios com exercícios padrão
- */
+// POPULA A LISTA DE EXERCÍCIOS APÓS A CRIAÇÃO DA ACADEMIA
 export async function populateDefaultExercises(gymId: string): Promise<void> {
   const defaultExercises = [
     // PEITO

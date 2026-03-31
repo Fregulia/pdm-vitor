@@ -1,6 +1,7 @@
 import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { StyleProp, ViewStyle } from 'react-native';
 
+// FAZ O MAPEAMENTO DE SF SYMBOLS PRA MATERIAL ICONS (IOS)
 export function IconSymbol({
   name,
   size = 24,

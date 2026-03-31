@@ -1,11 +1,18 @@
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import {
   AcademyInfo,
   getAcademyById,
   isAcademyComplete,
 } from "@/services/academy";
 import { getTrainerContext } from "@/services/trainers";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";

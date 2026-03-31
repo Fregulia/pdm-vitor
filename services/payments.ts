@@ -1,14 +1,14 @@
 import {
-  Timestamp,
-  addDoc,
-  collection,
-  doc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  where,
+    Timestamp,
+    addDoc,
+    collection,
+    doc,
+    getDocs,
+    onSnapshot,
+    orderBy,
+    query,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -38,9 +38,7 @@ export interface Subscription {
   autoRenew: boolean;
 }
 
-/**
- * Create a payment record
- */
+// CRIA UM REGISTRO DE COBRANÇA
 export async function createPayment(
   studentId: string,
   trainerId: string,
@@ -70,9 +68,7 @@ export async function createPayment(
   }
 }
 
-/**
- * Update payment status
- */
+// ATUALIZA O STATUS DE UM PAGAMENTO
 export async function updatePaymentStatus(
   paymentId: string,
   status: PaymentStatus,
@@ -93,9 +89,7 @@ export async function updatePaymentStatus(
   }
 }
 
-/**
- * Get payments for a student
- */
+// BUSCA OS PAGAMENTOS DE UM ALUNO
 export async function getStudentPayments(
   studentId: string
 ): Promise<Payment[]> {
@@ -124,9 +118,7 @@ export async function getStudentPayments(
   }
 }
 
-/**
- * Get payments for a trainer
- */
+// BUSCA OS PAGAMENTOS DE UM TRAINER
 export async function getTrainerPayments(
   trainerId: string
 ): Promise<Payment[]> {
@@ -155,9 +147,7 @@ export async function getTrainerPayments(
   }
 }
 
-/**
- * Get overdue payments for an academy
- */
+// BUSCA OS PAGAMENTOS EM ATRASO DA ACADEMIA
 export async function getOverduePayments(
   academyId: string
 ): Promise<Payment[]> {
@@ -186,9 +176,7 @@ export async function getOverduePayments(
   }
 }
 
-/**
- * Subscribe to payments for real-time updates
- */
+// ASSINA AS MUDANÇAS DE PAGAMENTO EM TEMPO REAL
 export function subscribeToPayments(
   userId: string,
   userRole: "student" | "trainer" | "owner",
@@ -227,9 +215,7 @@ export function subscribeToPayments(
   });
 }
 
-/**
- * Create a monthly subscription for a student
- */
+// CRIA UMA ASSINATURA MENSAL PARA UM ALUNO
 export async function createSubscription(
   studentId: string,
   planId: string,
@@ -257,10 +243,7 @@ export async function createSubscription(
   }
 }
 
-/**
- * Check and update overdue payments
- * This should be called periodically (e.g., daily)
- */
+// MARCA COMO EM ATRASO OS PAGAMENTOS VENCIDOS
 export async function updateOverduePayments(): Promise<void> {
   try {
     const paymentsRef = collection(db, "payments");

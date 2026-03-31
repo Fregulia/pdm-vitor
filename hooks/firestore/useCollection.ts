@@ -10,20 +10,17 @@ import { useEffect, useState } from "react";
 import { errorEmitter } from "../../utils/firebase/error-emitter";
 import { FirestorePermissionError } from "../../utils/firebase/errors";
 
-/** Utility type to add an 'id' field to a given type T. */
+// TIPO AUXILIAR PARA ADICIONAR O ID NO RESULTADO
 export type WithId<T> = T & { id: string };
 
-/**
- * Interface for the return value of the useCollection hook.
- * @template T Type of the document data.
- */
+// TIPOS DE RETORNO DO HOOK
 export interface UseCollectionResult<T> {
-  data: WithId<T>[] | null; // Document data with ID, or null.
-  isLoading: boolean; // True if loading.
-  error: FirestoreError | Error | null; // Error object, or null.
+  data: WithId<T>[] | null;
+  isLoading: boolean;
+  error: FirestoreError | Error | null;
 }
 
-/** Internal query interface to extract path */
+// INTERFACE INTERNA PARA PEGAR O CAMINHO DA QUERY
 interface InternalQuery extends Query<DocumentData> {
   _query: {
     path: {
@@ -33,15 +30,7 @@ interface InternalQuery extends Query<DocumentData> {
   };
 }
 
-/**
- * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
- *
- * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
- * The Firestore CollectionReference or Query. Waits if null/undefined.
- * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
- */
+// HOOK PARA ESCUTAR UMA COLLECTION OU QUERY DO FIRESTORE EM TEMPO REAL
 export function useCollection<T = any>(
   targetRefOrQuery:
     | CollectionReference<DocumentData>
@@ -79,7 +68,7 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // Extract path from either a ref or a query
+        // PEGA O CAMINHO SEJA COLLECTION OU QUERY
         const path: string =
           targetRefOrQuery.type === "collection"
             ? (targetRefOrQuery as CollectionReference).path
@@ -96,7 +85,7 @@ export function useCollection<T = any>(
         setData(null);
         setIsLoading(false);
 
-        // Trigger global error propagation
+        // DISPARA O ERRO GLOBAL
         errorEmitter.emit("permission-error", contextualError);
       }
     );

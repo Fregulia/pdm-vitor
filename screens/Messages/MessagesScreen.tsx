@@ -1,5 +1,30 @@
+// COMPONENTES
+import { UserAvatar } from "../../components/UserAvatar";
+
+// CONSTANTES
+import { Colors } from "../../constants/theme";
+
+// CONTEXTOS E HOOKS
+import { useAuth } from "../../context/AuthContext";
+
+// SERVIÇOS
+import {
+  type Conversation,
+  type Message,
+  getUserInfo,
+  markMessagesAsRead,
+  sendMessage,
+  subscribeToConversations,
+  subscribeToMessages,
+} from "../../services/messages";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
+
+// REACT
 import React, { useEffect, useState } from "react";
+
+// REACT NATIVE
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -10,18 +35,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { UserAvatar } from "../../components/UserAvatar";
-import { Colors } from "../../constants/theme";
-import { useAuth } from "../../context/AuthContext";
-import {
-  type Conversation,
-  type Message,
-  getUserInfo,
-  markMessagesAsRead,
-  sendMessage,
-  subscribeToConversations,
-  subscribeToMessages,
-} from "../../services/messages";
 
 // Compatibilidade com theme
 const theme = {

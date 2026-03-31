@@ -7,6 +7,7 @@ import React from "react";
 import { TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// BOTÃO PARA ABRIR O MENU LATERAL
 export function MenuButton() {
   const colorScheme = useColorScheme() ?? "light";
   const navigation = useNavigation();

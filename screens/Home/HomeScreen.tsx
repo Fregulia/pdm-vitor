@@ -1,13 +1,26 @@
+// COMPONENTES
 import { ThemedButton } from "@/components/ThemedButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { GlobalStyles } from "@/constants/styles";
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// UTILITÁRIOS
 import { makeMockStudents } from "@/utils/mock-data";
+
+// BIBLIOTECAS EXTERNAS
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
+
+// REACT
 import React, { useEffect, useMemo, useState } from "react";
+
+// REACT NATIVE
 import { Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -218,7 +231,7 @@ export default function HomeScreen() {
         {/* Acesso rápido ao Perfil */}
         <ThemedButton
           title="Ver todos os alunos"
-          onPress={() => router.push("/(tabs)/alunos")}
+          onPress={() => router.push("/(trainer)/(tabs)/students")}
           style={{ marginTop: 8 }}
         />
 

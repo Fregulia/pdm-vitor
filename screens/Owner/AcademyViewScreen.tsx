@@ -1,15 +1,28 @@
+// COMPONENTES
 import { ThemedButton } from "@/components/ThemedButton";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useAuth } from "@/context/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { AcademyInfo, getAcademy, isAcademyComplete } from "@/services/academy";
 import { db } from "@/services/firebase";
 import { getPlans, Plan } from "@/services/plans";
+
+// BIBLIOTECAS EXTERNAS
 import { FontAwesome } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { collection, getCountFromServer } from "firebase/firestore";
+
+// REACT
 import React, { useCallback, useState } from "react";
+
+// REACT NATIVE
 import {
   ActivityIndicator,
   ScrollView,
@@ -18,7 +31,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+// MAPA
 import MapView, { Callout, Marker, UrlTile } from "react-native-maps";
+
+// SAFE AREA
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AcademyViewScreen() {

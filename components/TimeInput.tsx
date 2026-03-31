@@ -7,6 +7,7 @@ import DateTimePicker, {
 import React, { useMemo, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 
+// CONVERTE TEXTO PARA HORA
 function parseTime(value?: string): Date {
   const d = new Date();
   if (!value) return new Date(d.setHours(9, 0, 0, 0));
@@ -17,12 +18,14 @@ function parseTime(value?: string): Date {
   return new Date(d.setHours(9, 0, 0, 0));
 }
 
+// FORMATA A HORA PARA EXIBIÇÃO
 function formatTime(date: Date): string {
   const h = String(date.getHours()).padStart(2, "0");
   const m = String(date.getMinutes()).padStart(2, "0");
   return `${h}:${m}`;
 }
 
+// INPUT DE HORA COM MODAL
 export function TimeInput({
   label,
   value,
@@ -53,6 +56,7 @@ export function TimeInput({
     setTempDate(null);
   };
 
+  // SALVA A HORA SELECIONADA
   const save = () => {
     const d = tempDate ?? date;
     onChange(formatTime(d));

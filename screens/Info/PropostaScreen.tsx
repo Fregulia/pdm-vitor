@@ -1,8 +1,19 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
+
+// REACT
 import React from "react";
+
+// REACT NATIVE
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function PropostaScreen() {

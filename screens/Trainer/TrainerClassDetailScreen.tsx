@@ -1,7 +1,14 @@
+// COMPONENTES
 import { BackButton } from "@/components/BackButton";
 import { UserAvatar } from "@/components/UserAvatar";
+
+// CONSTANTES
 import { Colors } from "@/constants/theme";
+
+// CONTEXTOS E HOOKS
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// SERVIÇOS
 import { Class, getClassById } from "@/services/classes";
 import { auth, db } from "@/services/firebase";
 import { Student } from "@/services/students";
@@ -11,6 +18,8 @@ import {
   WorkoutAssignment,
 } from "@/services/workoutAssignments";
 import { getWorkoutsByTrainer } from "@/services/workouts";
+
+// BIBLIOTECAS EXTERNAS
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";

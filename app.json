@@ -27,7 +27,8 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "READ_MEDIA_IMAGES"
-      ]
+      ],
+      "package": "com.vitorfregulia.entrega1"
     },
     "web": {
       "output": "static",
@@ -52,6 +53,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "15edd5b0-2767-471e-952f-70c027f1eb19"
+      }
     }
   }
 }

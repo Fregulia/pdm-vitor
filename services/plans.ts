@@ -11,8 +11,10 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+// TIPO DE VALIDADE DO PLANO
 export type PlanValidity = "daily" | "monthly" | "quarterly" | "annual";
 
+// TIPO DO PLANO
 export type Plan = {
   id: string;
   gymId: string;
@@ -24,6 +26,7 @@ export type Plan = {
   updatedAt?: any;
 };
 
+// TIPO DE DADOS P FORM
 export type PlanInput = {
   title: string;
   description: string;
@@ -31,6 +34,7 @@ export type PlanInput = {
   validity: PlanValidity;
 };
 
+// BUSCA PLANOS DA ACADEMIA - PÁGINA DE PLANOS
 export async function getPlans(gymId: string): Promise<Plan[]> {
   const plansRef = collection(db, "academies", gymId, "plans");
   const q = query(plansRef, orderBy("createdAt", "asc"));
@@ -42,6 +46,7 @@ export async function getPlans(gymId: string): Promise<Plan[]> {
   })) as Plan[];
 }
 
+// CRIA PLANO - FORM DE CRIAÇÃO
 export async function createPlan(
   gymId: string,
   planData: PlanInput
@@ -56,6 +61,7 @@ export async function createPlan(
   return docRef.id;
 }
 
+// ATUALIZA PLANO - PÁGINA DE DETALHES
 export async function updatePlan(
   gymId: string,
   planId: string,
@@ -68,6 +74,7 @@ export async function updatePlan(
   });
 }
 
+// DELETA PLANO - PÁGINA DE DETALHES
 export async function deletePlan(gymId: string, planId: string): Promise<void> {
   const planRef = doc(db, "academies", gymId, "plans", planId);
   await deleteDoc(planRef);
