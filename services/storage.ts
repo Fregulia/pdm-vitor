@@ -21,7 +21,7 @@ async function processAndUploadImage(uri: string): Promise<string> {
   const response = await fetch(manipulated.uri);
   const blob = await response.blob();
 
-  const storageRef = ref(storage, `imagens/perfil-usuario-${user.uid}.png`);
+  const storageRef = ref(storage, `imagens/perfil-usuario/${user.uid}/profile.png`);
   await uploadBytes(storageRef, blob);
 
   // RETORNA A URL DA IMAGEM SALVA
@@ -73,7 +73,7 @@ export async function deleteProfilePhoto(): Promise<void> {
   if (!user) throw new Error("NOT_AUTHENTICATED");
 
   // BUSCA PELO NOME ÚNICO E APAGA
-  const storageRef = ref(storage, `imagens/perfil-usuario-${user.uid}.png`);
+  const storageRef = ref(storage, `imagens/perfil-usuario/${user.uid}/profile.png`);
   try {
     await deleteObject(storageRef);
   } catch (error: any) {

@@ -83,6 +83,17 @@ export default function OwnerDrawerLayout() {
       />
 
       <Drawer.Screen
+        name="chat"
+        options={{
+          drawerLabel: "Chat",
+          title: "Chat",
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="chatbubble-ellipses" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
         name="profile"
         options={{
           drawerLabel: "Perfil",

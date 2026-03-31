@@ -1,15 +1,15 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    query,
-    Timestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -32,6 +32,16 @@ export interface Conversation {
   lastMessageTime: Timestamp;
   unreadCount: { [userId: string]: number };
 }
+
+export type ChatMemberRole = "owner" | "trainer" | "student";
+
+export type ChatMember = {
+  id: string;
+  name: string;
+  role: ChatMemberRole;
+  photoUrl?: string | null;
+  subtitle?: string;
+};
 
 // ENVIAR MENSAGEM - PÁGINA DE CHAT
 export async function sendMessage(
@@ -202,5 +212,79 @@ export async function getUserInfo(userId: string): Promise<any> {
   } catch (error) {
     console.error("Error getting user info:", error);
     throw error;
+  }
+}
+
+// BUSCA OS MEMBROS DE UMA ACADEMIA PARA O CHAT
+export async function getAcademyChatMembers(
+  gymId: string,
+  currentUserId?: string,
+  ownerUid?: string
+): Promise<ChatMember[]> {
+  try {
+    const [teachersSnap, studentsSnap, ownerInfo] = await Promise.all([
+      getDocs(collection(db, "academies", gymId, "teachers")),
+      getDocs(collection(db, "academies", gymId, "students")),
+      ownerUid ? getUserInfo(ownerUid).catch(() => null) : Promise.resolve(null),
+    ]);
+
+    const members: ChatMember[] = [];
+
+    if (ownerUid && ownerUid !== currentUserId) {
+      members.push({
+        id: ownerUid,
+        name:
+          ownerInfo?.displayName || ownerInfo?.name || ownerInfo?.email || "Owner",
+        role: "owner",
+        photoUrl: ownerInfo?.photoUrl || null,
+        subtitle: "Proprietário",
+      });
+    }
+
+    teachersSnap.docs.forEach((teacherDoc) => {
+      if (teacherDoc.id === currentUserId) return;
+      const data = teacherDoc.data() as any;
+      members.push({
+        id: teacherDoc.id,
+        name: data?.name || data?.displayName || "Professor",
+        role: "trainer",
+        photoUrl: data?.photoUrl || null,
+        subtitle: "Professor",
+      });
+    });
+
+    studentsSnap.docs.forEach((studentDoc) => {
+      if (studentDoc.id === currentUserId) return;
+      const data = studentDoc.data() as any;
+      members.push({
+        id: studentDoc.id,
+        name: data?.name || data?.displayName || "Aluno",
+        role: "student",
+        photoUrl: data?.photoUrl || null,
+        subtitle: "Aluno",
+      });
+    });
+
+    const uniqueMembers = new Map<string, ChatMember>();
+    members.forEach((member) => {
+      if (!uniqueMembers.has(member.id)) {
+        uniqueMembers.set(member.id, member);
+      }
+    });
+
+    return Array.from(uniqueMembers.values()).sort((left, right) => {
+      if (left.role !== right.role) {
+        const order: Record<ChatMemberRole, number> = {
+          owner: 0,
+          trainer: 1,
+          student: 2,
+        };
+        return order[left.role] - order[right.role];
+      }
+
+      return left.name.localeCompare(right.name, "pt-BR");
+    });
+  } catch {
+    return [];
   }
 }
